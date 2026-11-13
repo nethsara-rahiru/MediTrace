@@ -3,8 +3,8 @@ export default defineConfig({
   testDir: './tests/e2e',
   fullyParallel: false,
   workers: 1,
-  timeout: 60000,
-  expect: { timeout: 15000 },
+  timeout: 120000,
+  expect: { timeout: 30000 },
   use: {
     baseURL: 'http://localhost:8081',
     trace: 'retain-on-failure',

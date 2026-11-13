@@ -47,7 +47,10 @@ works without notification permission.
 
 ## Web preview
 
-Expo SQLite uses a WebAssembly worker. Production hosting must serve at least:
+Expo SQLite uses a WebAssembly worker. The current asynchronous query paths were
+tested successfully in Chromium, including without cross-origin isolation. For
+full compatibility, especially synchronous SQLite calls, production hosting
+should serve the HTML and assets with:
 
 ```
 Cross-Origin-Opener-Policy: same-origin

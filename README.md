@@ -21,10 +21,17 @@ For the browser preview:
 npm run web
 ```
 
-SQLite web support requires workers, WebAssembly and cross-origin isolation.
-The development server config sets COOP/COEP headers on Metro responses. An
-exported web deployment must set those headers itself; see [architecture](docs/architecture.md).
+SQLite web support uses workers and WebAssembly. Expo recommends COOP/COEP
+headers for full SQLite web compatibility, including synchronous operations. The
+current app uses asynchronous queries. An exported web deployment should configure
+these headers on its HTML and assets; see [architecture](docs/architecture.md).
 Browser preview does not establish native camera compatibility.
+
+## Preview
+
+![MedTrace browser overview with an empty local catalog](docs/screenshots/overview-desktop.png)
+
+[Phone-sized preview](docs/screenshots/overview-mobile.png)
 
 ## Included
 
