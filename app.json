@@ -16,11 +16,12 @@
     },
     "android": {
       "package": "lk.medtrace.app",
-      "permissions": [
-        "CAMERA",
-        "POST_NOTIFICATIONS"
-      ],
-      "allowBackup": false
+      "permissions": ["CAMERA", "POST_NOTIFICATIONS"],
+      "allowBackup": false,
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/android-icon-foreground.png",
+        "backgroundColor": "#E8F3EE"
+      }
     },
     "web": {
       "bundler": "metro",
@@ -38,7 +39,16 @@
         }
       ],
       "expo-notifications",
-      "expo-status-bar"
+      "expo-status-bar",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/splash-icon.png",
+          "imageWidth": 160,
+          "resizeMode": "contain",
+          "backgroundColor": "#F6F8FA"
+        }
+      ]
     ],
     "experiments": {
       "typedRoutes": true
