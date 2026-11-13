@@ -1,0 +1,18 @@
+export type Verification = 'user_entered' | 'source_checked';
+export type Ingredient = { name: string; strength: string };
+export type Product = {
+ id: number; name: string; generic_name: string; strength: string; dosage_form: string;
+ manufacturer: string; country: string; category: string; pack_size: string;
+ storage: string; warnings: string; indications: string; prescription: string;
+ source: string; verified_at: string | null; verification: Verification;
+ created_at: string; ingredients: Ingredient[]; barcodes: string[];
+};
+export type ProductInput = Omit<Product, 'id' | 'created_at'>;
+export type ExpiryPrecision = 'day' | 'month' | 'unknown';
+export type InventoryItem = {
+ id: number; product_id: number; quantity: number; unit: string; batch: string;
+ expiry: string | null; expiry_precision: ExpiryPrecision; expiry_source: string;
+ created_at: string; name: string; strength: string; dosage_form: string;
+ generic_name: string; ingredients: Ingredient[];
+};
+export type Scan = { id: number; raw: string; format: string; identifier: string | null; product_id: number | null; status: string; batch: string | null; expiry: string | null; serial: string | null; notes: string; scanned_at: string; name: string | null };
