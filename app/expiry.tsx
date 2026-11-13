@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
-import { Bell, CalendarClock } from 'lucide-react-native';
+import { Bell } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { Page, Heading, Button, Card, Chips, Empty, Notice } from '../src/components/ui';
 import { InventoryCard } from '../src/components/InventoryCard';
@@ -85,7 +85,7 @@ export default function Expiry() {
           busy={busy}
         />
       </Card>
-      {error && <Notice tone="amber">{error}</Notice>}
+      {Boolean(error) && <Notice tone="amber">{error}</Notice>}
       <Chips
         items={['Expiring soon', 'Expired', 'Valid', 'Expiry unknown', 'All']}
         value={filter}

@@ -1,4 +1,4 @@
-export type Verification = "user_entered" | "source_checked";
+export type Verification = 'user_entered' | 'source_checked';
 export type Ingredient = { name: string; strength: string };
 export type Product = {
   id: number;
@@ -21,8 +21,8 @@ export type Product = {
   ingredients: Ingredient[];
   barcodes: string[];
 };
-export type ProductInput = Omit<Product, "id" | "created_at">;
-export type ExpiryPrecision = "day" | "month" | "unknown";
+export type ProductInput = Omit<Product, 'id' | 'created_at'>;
+export type ExpiryPrecision = 'day' | 'month' | 'unknown';
 export type InventoryItem = {
   id: number;
   product_id: number;

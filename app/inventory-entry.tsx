@@ -76,7 +76,7 @@ export default function InventoryEntry() {
         title={existing ? 'Manage medicine' : 'Add to my medicines'}
         subtitle="Record a particular pack. Batch and expiry may differ between packs."
       />
-      {error && <Notice tone="red">{error}</Notice>}
+      {Boolean(error) && <Notice tone="red">{error}</Notice>}
       {!products.length ? (
         <Empty
           title="Register a product first"

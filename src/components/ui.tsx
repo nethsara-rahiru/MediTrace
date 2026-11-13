@@ -1,4 +1,4 @@
-import React from "react";
+import React from 'react';
 import {
   ActivityIndicator,
   Pressable,
@@ -8,10 +8,10 @@ import {
   TextInput,
   View,
   type TextInputProps,
-} from "react-native";
-import { ArrowLeft, ArrowRight, CircleHelp, Plus } from "lucide-react-native";
-import { router } from "expo-router";
-import { colors, shadow } from "../theme";
+} from 'react-native';
+import { ArrowLeft, ArrowRight, CircleHelp, Plus } from 'lucide-react-native';
+import { router } from 'expo-router';
+import { colors, shadow } from '../theme';
 export function Page({ children }: React.PropsWithChildren) {
   return (
     <ScrollView
@@ -38,17 +38,17 @@ export function Heading({
         <Text style={s.title} accessibilityRole="header">
           {title}
         </Text>
-        {subtitle && <Text style={s.subtitle}>{subtitle}</Text>}
+        {Boolean(subtitle) && <Text style={s.subtitle}>{subtitle}</Text>}
       </View>
       {action}
     </View>
   );
 }
-export function Back({ label = "Back" }: { label?: string }) {
+export function Back({ label = 'Back' }: { label?: string }) {
   return (
     <Pressable
       accessibilityRole="button"
-      onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))}
+      onPress={() => (router.canGoBack() ? router.back() : router.replace('/'))}
       style={s.back}
     >
       <ArrowLeft size={18} color={colors.muted} />
@@ -56,28 +56,25 @@ export function Back({ label = "Back" }: { label?: string }) {
     </Pressable>
   );
 }
-export function Card({
-  children,
-  style,
-}: React.PropsWithChildren<{ style?: any }>) {
+export function Card({ children, style }: React.PropsWithChildren<{ style?: any }>) {
   return <View style={[s.card, style]}>{children}</View>;
 }
 export function Button({
   title,
   onPress,
-  variant = "primary",
+  variant = 'primary',
   icon,
   disabled,
   busy,
 }: {
   title: string;
   onPress: () => void;
-  variant?: "primary" | "secondary" | "danger";
+  variant?: 'primary' | 'secondary' | 'danger';
   icon?: React.ReactNode;
   disabled?: boolean;
   busy?: boolean;
 }) {
-  const dark = variant !== "secondary";
+  const dark = variant !== 'secondary';
   return (
     <Pressable
       accessibilityRole="button"
@@ -86,34 +83,26 @@ export function Button({
       onPress={onPress}
       style={({ pressed }) => [
         s.button,
-        variant === "secondary"
+        variant === 'secondary'
           ? s.secondary
-          : variant === "danger"
+          : variant === 'danger'
             ? { backgroundColor: colors.red }
             : s.primary,
         (disabled || busy) && { opacity: 0.5 },
         pressed && { opacity: 0.8 },
       ]}
     >
-      {busy ? (
-        <ActivityIndicator color={dark ? colors.white : colors.teal} />
-      ) : (
-        icon
-      )}
-      <Text
-        style={[s.buttonText, { color: dark ? colors.white : colors.teal }]}
-      >
-        {title}
-      </Text>
+      {busy ? <ActivityIndicator color={dark ? colors.white : colors.teal} /> : icon}
+      <Text style={[s.buttonText, { color: dark ? colors.white : colors.teal }]}>{title}</Text>
     </Pressable>
   );
 }
 export function Badge({
   label,
-  tone = "neutral",
+  tone = 'neutral',
 }: {
   label: string;
-  tone?: "neutral" | "green" | "amber" | "red" | "blue";
+  tone?: 'neutral' | 'green' | 'amber' | 'red' | 'blue';
 }) {
   const palette = {
     neutral: [colors.background, colors.muted],
@@ -143,36 +132,29 @@ export function Field({
         {...props}
         style={[
           s.input,
-          props.multiline && { minHeight: 100, textAlignVertical: "top" },
+          props.multiline && { minHeight: 100, textAlignVertical: 'top' },
           props.style,
         ]}
       />
-      {hint && <Text style={s.hint}>{hint}</Text>}
+      {Boolean(hint) && <Text style={s.hint}>{hint}</Text>}
     </View>
   );
 }
 export function Notice({
   children,
-  tone = "neutral",
-}: React.PropsWithChildren<{ tone?: "neutral" | "amber" | "red" }>) {
+  tone = 'neutral',
+}: React.PropsWithChildren<{ tone?: 'neutral' | 'amber' | 'red' }>) {
   return (
     <View
       style={[
         s.notice,
         {
           backgroundColor:
-            tone === "amber"
-              ? colors.amberBg
-              : tone === "red"
-                ? colors.redBg
-                : colors.blueBg,
+            tone === 'amber' ? colors.amberBg : tone === 'red' ? colors.redBg : colors.blueBg,
         },
       ]}
     >
-      <CircleHelp
-        size={18}
-        color={tone === "red" ? colors.red : colors.muted}
-      />
+      <CircleHelp size={18} color={tone === 'red' ? colors.red : colors.muted} />
       <Text style={s.noticeText}>{children}</Text>
     </View>
   );
@@ -228,11 +210,7 @@ export function Chips({
   onChange: (v: string) => void;
 }) {
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={s.chips}
-    >
+    <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={s.chips}>
       {items.map((item) => (
         <Pressable
           accessibilityRole="button"
@@ -241,9 +219,7 @@ export function Chips({
           onPress={() => onChange(item)}
           style={[s.chip, value === item && s.chipActive]}
         >
-          <Text style={[s.chipText, value === item && { color: colors.white }]}>
-            {item}
-          </Text>
+          <Text style={[s.chipText, value === item && { color: colors.white }]}>{item}</Text>
         </Pressable>
       ))}
     </ScrollView>
@@ -252,17 +228,17 @@ export function Chips({
 export const s = StyleSheet.create({
   page: { flex: 1, backgroundColor: colors.background },
   content: { padding: 24, paddingBottom: 40 },
-  container: { width: "100%", maxWidth: 1120, alignSelf: "center", gap: 20 },
+  container: { width: '100%', maxWidth: 1120, alignSelf: 'center', gap: 20 },
   heading: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 16,
-    alignItems: "center",
+    alignItems: 'center',
     marginBottom: 4,
   },
   title: {
     color: colors.navy,
     fontSize: 30,
-    fontWeight: "700",
+    fontWeight: '700',
     letterSpacing: -0.8,
   },
   subtitle: { color: colors.muted, fontSize: 14, lineHeight: 22, marginTop: 7 },
@@ -280,27 +256,27 @@ export const s = StyleSheet.create({
     paddingVertical: 13,
     paddingHorizontal: 20,
     borderRadius: 12,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: 9,
   },
   primary: { backgroundColor: colors.teal },
   secondary: { backgroundColor: colors.mint },
-  buttonText: { fontSize: 14, fontWeight: "700" },
+  buttonText: { fontSize: 14, fontWeight: '700' },
   badge: {
-    flexDirection: "row",
-    alignItems: "center",
-    alignSelf: "flex-start",
+    flexDirection: 'row',
+    alignItems: 'center',
+    alignSelf: 'flex-start',
     paddingHorizontal: 10,
     paddingVertical: 6,
     borderRadius: 30,
     gap: 6,
   },
   dot: { width: 5, height: 5, borderRadius: 3 },
-  badgeText: { fontSize: 11, fontWeight: "600" },
+  badgeText: { fontSize: 11, fontWeight: '600' },
   field: { gap: 8, flex: 1, minWidth: 180 },
-  label: { fontSize: 13, fontWeight: "600", color: colors.text },
+  label: { fontSize: 13, fontWeight: '600', color: colors.text },
   input: {
     minHeight: 48,
     borderWidth: 1,
@@ -315,41 +291,41 @@ export const s = StyleSheet.create({
   notice: {
     padding: 15,
     borderRadius: 12,
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 10,
-    alignItems: "flex-start",
+    alignItems: 'flex-start',
   },
   noticeText: { flex: 1, fontSize: 12, color: colors.text, lineHeight: 20 },
-  empty: { alignItems: "center", paddingVertical: 38 },
+  empty: { alignItems: 'center', paddingVertical: 38 },
   emptyIcon: { padding: 16, backgroundColor: colors.mint, borderRadius: 18 },
   emptyTitle: {
     fontSize: 18,
     color: colors.navy,
-    fontWeight: "600",
-    textAlign: "center",
+    fontWeight: '600',
+    textAlign: 'center',
   },
   emptyText: {
     color: colors.muted,
-    textAlign: "center",
+    textAlign: 'center',
     maxWidth: 380,
     fontSize: 14,
     lineHeight: 22,
   },
   section: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     gap: 12,
-    alignItems: "center",
+    alignItems: 'center',
   },
-  sectionTitle: { fontSize: 18, fontWeight: "700", color: colors.navy },
-  link: { flexDirection: "row", alignItems: "center", gap: 6, minHeight: 44 },
-  linkText: { fontSize: 12, color: colors.teal, fontWeight: "600" },
+  sectionTitle: { fontSize: 18, fontWeight: '700', color: colors.navy },
+  link: { flexDirection: 'row', alignItems: 'center', gap: 6, minHeight: 44 },
+  linkText: { fontSize: 12, color: colors.teal, fontWeight: '600' },
   back: {
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 8,
-    alignItems: "center",
+    alignItems: 'center',
     minHeight: 44,
-    alignSelf: "flex-start",
+    alignSelf: 'flex-start',
   },
   backText: { color: colors.muted, fontSize: 13 },
   chips: { gap: 8 },
@@ -362,5 +338,5 @@ export const s = StyleSheet.create({
     borderColor: colors.border,
   },
   chipActive: { backgroundColor: colors.teal, borderColor: colors.teal },
-  chipText: { color: colors.muted, fontSize: 12, fontWeight: "600" },
+  chipText: { color: colors.muted, fontSize: 12, fontWeight: '600' },
 });

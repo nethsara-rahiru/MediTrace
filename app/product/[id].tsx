@@ -1,6 +1,6 @@
 import { useLocalSearchParams, router } from 'expo-router';
 import { Text, View } from 'react-native';
-import { Pencil, Plus, Pill } from 'lucide-react-native';
+import { Pencil, Plus } from 'lucide-react-native';
 import { useData } from '../../src/data/context';
 import {
   Page,

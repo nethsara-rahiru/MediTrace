@@ -74,7 +74,6 @@ EAS profiles are included for development builds and an installable preview APK.
 Builds require your own Expo account and EAS project association.
 
 ```sh
-npx expo install expo-dev-client
 npx eas-cli build --platform android --profile development
 # Or build a standalone preview APK:
 npx eas-cli build --platform android --profile preview

@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Text, View } from 'react-native';
-import { Plus, Search } from 'lucide-react-native';
+import { Plus } from 'lucide-react-native';
 import { router } from 'expo-router';
 import { Page, Heading, Button, Field, Chips, Empty, Notice } from '../src/components/ui';
 import { ProductCard } from '../src/components/ProductCard';
@@ -65,7 +65,7 @@ export default function Library() {
       <Text style={{ fontSize: 12, color: colors.muted }}>
         {results.length} {results.length === 1 ? 'product' : 'products'} · Stored on this device
       </Text>
-      {error && <Notice tone="red">{error}</Notice>}
+      {Boolean(error) && <Notice tone="red">{error}</Notice>}
       {results.map((p) => (
         <ProductCard key={p.id} product={p} />
       ))}

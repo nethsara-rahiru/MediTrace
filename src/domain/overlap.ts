@@ -1,11 +1,9 @@
-import type { InventoryItem } from "./types";
+import type { InventoryItem } from './types';
 export type IngredientOverlap = {
   ingredient: string;
   medicines: { productId: number; name: string }[];
 };
-export function ingredientOverlaps(
-  items: InventoryItem[],
-): IngredientOverlap[] {
+export function ingredientOverlaps(items: InventoryItem[]): IngredientOverlap[] {
   const map = new Map<string, Map<number, string>>();
   for (const item of items.filter((i) => i.quantity > 0))
     for (const ingredient of item.ingredients) {

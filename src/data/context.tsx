@@ -1,17 +1,10 @@
-import React, {
-  createContext,
-  useCallback,
-  useContext,
-  useEffect,
-  useRef,
-  useState,
-} from "react";
-import { useSQLiteContext } from "expo-sqlite";
-import type { SQLiteDatabase } from "expo-sqlite";
-import type { InventoryItem, Product, Scan } from "../domain/types";
-import { listProducts } from "./products";
-import { listInventory } from "./inventory";
-import { listHistory } from "./history";
+import React, { createContext, useCallback, useContext, useEffect, useRef, useState } from 'react';
+import { useSQLiteContext } from 'expo-sqlite';
+import type { SQLiteDatabase } from 'expo-sqlite';
+import type { InventoryItem, Product, Scan } from '../domain/types';
+import { listProducts } from './products';
+import { listInventory } from './inventory';
+import { listHistory } from './history';
 const Context = createContext<{
   db: SQLiteDatabase;
   products: Product[];
@@ -28,7 +21,7 @@ export function DataProvider({ children }: React.PropsWithChildren) {
     [inventory, setInventory] = useState<InventoryItem[]>([]),
     [history, setHistory] = useState<Scan[]>([]);
   const [loading, setLoading] = useState(true),
-    [error, setError] = useState("");
+    [error, setError] = useState('');
   const refresh = useCallback(async () => {
     try {
       const p = await listProducts(db);
@@ -37,7 +30,7 @@ export function DataProvider({ children }: React.PropsWithChildren) {
       setProducts(p);
       setInventory(i);
       setHistory(h);
-      setError("");
+      setError('');
     } catch (e) {
       setError((e as Error).message);
       throw e;
@@ -81,6 +74,6 @@ export function DataProvider({ children }: React.PropsWithChildren) {
 }
 export function useData() {
   const value = useContext(Context);
-  if (!value) throw new Error("Database provider is unavailable.");
+  if (!value) throw new Error('Database provider is unavailable.');
   return value;
 }

@@ -41,7 +41,7 @@ export default function HistoryDetail() {
           </View>
         ))}
       </Card>
-      {scan.notes && <Notice tone="amber">{scan.notes}</Notice>}
+      {Boolean(scan.notes) && <Notice tone="amber">{scan.notes}</Notice>}
       {product && <ProductCard product={product} />}
       <Notice>
         This is the recorded result at scan time. Viewing history does not create another scan or

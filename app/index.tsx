@@ -57,7 +57,7 @@ export default function Home() {
       path: '/library',
     },
     {
-      label: 'Scans recorded',
+      label: 'Recent scans recorded',
       value: history.length,
       icon: ScanLine,
       tone: colors.teal,

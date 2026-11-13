@@ -123,7 +123,7 @@ function ScanResultContent() {
               </Text>
             )}
           </Card>
-          {error && <Notice tone="red">{error}</Notice>}
+          {Boolean(error) && <Notice tone="red">{error}</Notice>}
           {decoded.notes.map((note, i) => (
             <Notice key={i} tone="amber">
               {note}

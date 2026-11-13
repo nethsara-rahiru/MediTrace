@@ -1,10 +1,10 @@
-import { normalizeIdentifier } from "./identifiers";
-import { parseDigitalLink, parseGS1, type GS1Result } from "./gs1";
+import { normalizeIdentifier } from './identifiers';
+import { parseDigitalLink, parseGS1, type GS1Result } from './gs1';
 export type DecodedScan = GS1Result & {
   raw: string;
   format: string;
   identifier: string | null;
-  kind: "product" | "gs1" | "url" | "unknown";
+  kind: 'product' | 'gs1' | 'url' | 'unknown';
 };
 export function decodeScan(raw: string, format: string): DecodedScan {
   const value = raw.trim();
@@ -12,38 +12,35 @@ export function decodeScan(raw: string, format: string): DecodedScan {
     raw: value,
     format,
     identifier: null,
-    kind: "unknown",
+    kind: 'unknown',
     notes: [],
   };
   if (!value || value.length > 4096)
-    return { ...base, notes: ["Empty or oversized scan content."] };
+    return { ...base, notes: ['Empty or oversized scan content.'] };
   const link = parseDigitalLink(value);
-  if (link)
-    return { ...base, ...link, kind: "gs1", identifier: link.gtin ?? null };
+  if (link) return { ...base, ...link, kind: 'gs1', identifier: link.gtin ?? null };
   if (/^https?:\/\//i.test(value))
     return {
       ...base,
-      kind: "url",
+      kind: 'url',
       notes: [
-        "This QR code contains a website address. It was not opened or used as a product identifier.",
+        'This QR code contains a website address. It was not opened or used as a product identifier.',
       ],
     };
   if (
-    format === "gs1" ||
+    format === 'gs1' ||
     /^\](d2|C1|Q3)/.test(value) ||
-    value.startsWith("(01)") ||
-    (["datamatrix", "code128"].includes(format) &&
-      value.includes("\x1d") &&
-      value.startsWith("01"))
+    value.startsWith('(01)') ||
+    (['datamatrix', 'code128'].includes(format) && value.includes('\x1d') && value.startsWith('01'))
   ) {
     const parsed = parseGS1(value);
-    return { ...base, ...parsed, kind: "gs1", identifier: parsed.gtin ?? null };
+    return { ...base, ...parsed, kind: 'gs1', identifier: parsed.gtin ?? null };
   }
   // DataMatrix payloads without a GS1 indicator or separator are not guessed to be GS1.
   try {
     return {
       ...base,
-      kind: "product",
+      kind: 'product',
       identifier: normalizeIdentifier(value, format),
     };
   } catch (error) {

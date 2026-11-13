@@ -1,9 +1,9 @@
-import { Pressable, StyleSheet, Text, View } from "react-native";
-import { ChevronRight, Pill } from "lucide-react-native";
-import { router } from "expo-router";
-import type { Product } from "../domain/types";
-import { colors } from "../theme";
-import { Badge } from "./ui";
+import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { ChevronRight, Pill } from 'lucide-react-native';
+import { router } from 'expo-router';
+import type { Product } from '../domain/types';
+import { colors } from '../theme';
+import { Badge } from './ui';
 export function ProductCard({ product }: { product: Product }) {
   return (
     <Pressable
@@ -20,20 +20,14 @@ export function ProductCard({ product }: { product: Product }) {
           {product.name} <Text style={s.strength}>{product.strength}</Text>
         </Text>
         <Text style={s.generic}>
-          {product.generic_name || "Generic name not recorded"} ·{" "}
-          {product.dosage_form || "Form not recorded"}
+          {product.generic_name || 'Generic name not recorded'} ·{' '}
+          {product.dosage_form || 'Form not recorded'}
         </Text>
         <View style={s.meta}>
-          <Text style={s.manufacturer}>
-            {product.manufacturer || "Manufacturer not recorded"}
-          </Text>
+          <Text style={s.manufacturer}>{product.manufacturer || 'Manufacturer not recorded'}</Text>
           <Badge
-            label={
-              product.verification === "source_checked"
-                ? "Source checked"
-                : "User-entered"
-            }
-            tone={product.verification === "source_checked" ? "green" : "amber"}
+            label={product.verification === 'source_checked' ? 'Source checked' : 'User-entered'}
+            tone={product.verification === 'source_checked' ? 'green' : 'amber'}
           />
         </View>
       </View>
@@ -48,26 +42,26 @@ const s = StyleSheet.create({
     borderColor: colors.border,
     borderRadius: 16,
     padding: 18,
-    flexDirection: "row",
+    flexDirection: 'row',
     gap: 15,
-    alignItems: "center",
+    alignItems: 'center',
   },
   icon: {
     width: 48,
     height: 48,
     borderRadius: 14,
     backgroundColor: colors.mint,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  name: { fontSize: 16, fontWeight: "700", color: colors.navy },
-  strength: { fontWeight: "400", color: colors.muted, fontSize: 13 },
+  name: { fontSize: 16, fontWeight: '700', color: colors.navy },
+  strength: { fontWeight: '400', color: colors.muted, fontSize: 13 },
   generic: { fontSize: 12, color: colors.muted, lineHeight: 18 },
   meta: {
-    flexDirection: "row",
-    flexWrap: "wrap",
+    flexDirection: 'row',
+    flexWrap: 'wrap',
     gap: 10,
-    alignItems: "center",
+    alignItems: 'center',
   },
   manufacturer: { fontSize: 11, color: colors.muted },
 });

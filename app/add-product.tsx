@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
-import { Plus, Trash2 } from 'lucide-react-native';
+import { Plus } from 'lucide-react-native';
 import { Page, Back, Heading, Card, Field, Button, Notice, Section } from '../src/components/ui';
 import { useData } from '../src/data/context';
 import { saveProduct } from '../src/data/products';
@@ -95,7 +95,7 @@ export default function AddProduct() {
         Local entries are labelled user-entered. Saving a record does not independently verify its
         medical information.
       </Notice>
-      {error && <Notice tone="red">{error}</Notice>}
+      {Boolean(error) && <Notice tone="red">{error}</Notice>}
       <Section title="Product identity" />
       <Card>
         {field('Brand / product name *', 'name', 'As printed on the package')}
