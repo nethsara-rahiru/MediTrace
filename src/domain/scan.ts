@@ -8,7 +8,7 @@ export function decodeScan(raw: string, format: string): DecodedScan {
  const link = parseDigitalLink(value);
  if (link) return { ...base, ...link, kind: 'gs1', identifier: link.gtin ?? null };
  if (/^https?:\/\//i.test(value)) return { ...base, kind: 'url', notes: ['This QR code contains a website address. It was not opened or used as a product identifier.'] };
- if (/^\](d2|C1|Q3)/.test(value) || value.startsWith('(01)') || (['datamatrix','code128'].includes(format) && value.includes('\x1d') && value.startsWith('01'))) {
+ if (format === 'gs1' || /^\](d2|C1|Q3)/.test(value) || value.startsWith('(01)') || (['datamatrix','code128'].includes(format) && value.includes('\x1d') && value.startsWith('01'))) {
    const parsed = parseGS1(value);
    return { ...base, ...parsed, kind: 'gs1', identifier: parsed.gtin ?? null };
  }
