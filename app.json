@@ -16,10 +16,7 @@
     },
     "android": {
       "package": "lk.medtrace.app",
-      "permissions": [
-        "CAMERA",
-        "POST_NOTIFICATIONS"
-      ],
+      "permissions": ["CAMERA", "POST_NOTIFICATIONS"],
       "allowBackup": false,
       "adaptiveIcon": {
         "foregroundImage": "./assets/android-icon-foreground.png",
