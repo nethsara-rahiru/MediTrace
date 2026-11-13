@@ -15,4 +15,8 @@ export async function saveInventory(db: SQLiteDatabase, input: InventoryInput, i
  const result=await db.runAsync('INSERT INTO user_medicines(quantity,unit,batch,expiry,expiry_precision,expiry_source,product_id) VALUES (?,?,?,?,?,?,?)',...values,input.product_id);
  return result.lastInsertRowId;
 }
-export async function removeInventory(db: SQLiteDatabase, id: number) { await db.runAsync('DELETE FROM user_medicines WHERE id=?',id); }
+export async function removeInventory(db: SQLiteDatabase, id: number) {
+ const reminder=await db.getFirstAsync<{notification_id:string}>('SELECT notification_id FROM expiry_reminders WHERE inventory_id=?',id);
+ if(reminder){const { Platform }=await import('react-native');if(Platform.OS!=='web'){const n=await import('expo-notifications');await n.cancelScheduledNotificationAsync(reminder.notification_id);}}
+ await db.runAsync('DELETE FROM user_medicines WHERE id=?',id);
+}
