@@ -1,4 +1,4 @@
-import type { SQLiteDatabase } from 'expo-sqlite';
+import type { SQLiteDatabase } from "expo-sqlite";
 export const SCHEMA_VERSION = 2;
 export const schema = `
 CREATE TABLE data_sources (
@@ -50,9 +50,20 @@ CREATE TABLE expiry_reminders (
 PRAGMA user_version = 1;
 `;
 export async function migrate(db: SQLiteDatabase) {
- await db.execAsync('PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL;');
- const version = await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version');
- if ((version?.user_version ?? 0) > SCHEMA_VERSION) throw new Error('This database needs a newer version of MedTrace.');
- if ((version?.user_version ?? 0) === 0) await db.withTransactionAsync(async () => { await db.execAsync(schema); });
- if ((version?.user_version ?? 0) < 2) await db.withTransactionAsync(async () => { await db.execAsync('CREATE TABLE IF NOT EXISTS preferences (key TEXT PRIMARY KEY,value TEXT NOT NULL); PRAGMA user_version = 2;'); });
+  await db.execAsync("PRAGMA foreign_keys = ON; PRAGMA journal_mode = WAL;");
+  const version = await db.getFirstAsync<{ user_version: number }>(
+    "PRAGMA user_version",
+  );
+  if ((version?.user_version ?? 0) > SCHEMA_VERSION)
+    throw new Error("This database needs a newer version of MedTrace.");
+  if ((version?.user_version ?? 0) === 0)
+    await db.withTransactionAsync(async () => {
+      await db.execAsync(schema);
+    });
+  if ((version?.user_version ?? 0) < 2)
+    await db.withTransactionAsync(async () => {
+      await db.execAsync(
+        "CREATE TABLE IF NOT EXISTS preferences (key TEXT PRIMARY KEY,value TEXT NOT NULL); PRAGMA user_version = 2;",
+      );
+    });
 }
