@@ -39,3 +39,12 @@ yarn-error.*
 # generated native folders
 /ios
 /android
+
+# Browser test artifacts
+playwright-report/
+test-results/
+# Local databases and secrets
+*.db
+*.db-shm
+*.db-wal
+.env
