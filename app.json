@@ -1,25 +1,46 @@
 {
   "expo": {
-    "name": "medtrace-scaffold",
-    "slug": "medtrace-scaffold",
+    "name": "MedTrace",
+    "slug": "medtrace",
+    "scheme": "medtrace",
     "version": "1.0.0",
     "orientation": "portrait",
-    "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "icon": "./assets/icon.png",
     "ios": {
-      "supportsTablet": true
+      "supportsTablet": true,
+      "bundleIdentifier": "lk.medtrace.app",
+      "infoPlist": {
+        "NSCameraUsageDescription": "Scan medicine packaging to find locally stored product information."
+      }
     },
     "android": {
-      "adaptiveIcon": {
-        "backgroundColor": "#E6F4FE",
-        "foregroundImage": "./assets/android-icon-foreground.png",
-        "backgroundImage": "./assets/android-icon-background.png",
-        "monochromeImage": "./assets/android-icon-monochrome.png"
-      },
-      "predictiveBackGestureEnabled": false
+      "package": "lk.medtrace.app",
+      "permissions": [
+        "CAMERA",
+        "POST_NOTIFICATIONS"
+      ],
+      "allowBackup": false
     },
     "web": {
+      "bundler": "metro",
+      "output": "single",
       "favicon": "./assets/favicon.png"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-sqlite",
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Allow MedTrace to scan medicine packaging.",
+          "recordAudioAndroid": false
+        }
+      ],
+      "expo-notifications"
+    ],
+    "experiments": {
+      "typedRoutes": true
     }
   }
 }

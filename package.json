@@ -1,7 +1,7 @@
 {
-  "name": "medtrace-scaffold",
+  "name": "medtrace",
   "version": "1.0.0",
-  "main": "index.ts",
+  "main": "expo-router/entry",
   "dependencies": {
     "expo": "~58.0.25",
     "expo-status-bar": "~58.0.5",
@@ -16,7 +16,11 @@
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
-    "web": "expo start --web"
+    "web": "expo start --web",
+    "typecheck": "tsc --noEmit",
+    "test": "tsx --test tests/*.test.ts",
+    "export:web": "expo export --platform web",
+    "doctor": "npx expo-doctor"
   },
   "private": true
 }
