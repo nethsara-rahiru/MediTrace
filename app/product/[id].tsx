@@ -1,7 +1,7 @@
-import { useLocalSearchParams, router } from "expo-router";
-import { Text, View } from "react-native";
-import { Pencil, Plus, Pill } from "lucide-react-native";
-import { useData } from "../../src/data/context";
+import { useLocalSearchParams, router } from 'expo-router';
+import { Text, View } from 'react-native';
+import { Pencil, Plus, Pill } from 'lucide-react-native';
+import { useData } from '../../src/data/context';
 import {
   Page,
   Back,
@@ -12,14 +12,14 @@ import {
   Notice,
   Section,
   Empty,
-} from "../../src/components/ui";
-import { colors } from "../../src/theme";
+} from '../../src/components/ui';
+import { colors } from '../../src/theme';
 function Detail({ label, value }: { label: string; value: string }) {
   return (
     <View style={{ gap: 5, flex: 1, minWidth: 180 }}>
       <Text style={{ fontSize: 11, color: colors.muted }}>{label}</Text>
       <Text style={{ fontSize: 14, color: colors.text, lineHeight: 22 }}>
-        {value || "Not recorded"}
+        {value || 'Not recorded'}
       </Text>
     </View>
   );
@@ -43,43 +43,39 @@ export default function ProductDetails() {
       <Back label="Medicine library" />
       <Heading
         title={p.name}
-        subtitle={[p.generic_name, p.strength, p.dosage_form]
-          .filter(Boolean)
-          .join(" · ")}
+        subtitle={[p.generic_name, p.strength, p.dosage_form].filter(Boolean).join(' · ')}
         action={
           <Button
             title="Edit"
             variant="secondary"
             icon={<Pencil size={15} color={colors.teal} />}
-            onPress={() =>
-              router.push({ pathname: "/add-product", params: { id: p.id } })
-            }
+            onPress={() => router.push({ pathname: '/add-product', params: { id: p.id } })}
           />
         }
       />
       <Card>
         <View
           style={{
-            flexDirection: "row",
-            justifyContent: "space-between",
-            flexWrap: "wrap",
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            flexWrap: 'wrap',
             gap: 15,
           }}
         >
           <Badge
             label={
-              p.verification === "source_checked"
-                ? "Source checked"
-                : "User-entered · not independently verified"
+              p.verification === 'source_checked'
+                ? 'Source checked'
+                : 'User-entered · not independently verified'
             }
-            tone={p.verification === "source_checked" ? "green" : "amber"}
+            tone={p.verification === 'source_checked' ? 'green' : 'amber'}
           />
           <Badge label="Local catalog" tone="blue" />
         </View>
         <View
           style={{
-            flexDirection: "row",
-            flexWrap: "wrap",
+            flexDirection: 'row',
+            flexWrap: 'wrap',
             gap: 24,
             marginVertical: 12,
           }}
@@ -94,7 +90,7 @@ export default function ProductDetails() {
           icon={<Plus size={16} color="white" />}
           onPress={() =>
             router.push({
-              pathname: "/inventory-entry",
+              pathname: '/inventory-entry',
               params: { productId: p.id },
             })
           }
@@ -107,8 +103,8 @@ export default function ProductDetails() {
             <View
               key={i.name}
               style={{
-                flexDirection: "row",
-                justifyContent: "space-between",
+                flexDirection: 'row',
+                justifyContent: 'space-between',
                 gap: 12,
               }}
             >
@@ -116,20 +112,19 @@ export default function ProductDetails() {
                 style={{
                   color: colors.text,
                   fontSize: 14,
-                  textTransform: "capitalize",
+                  textTransform: 'capitalize',
                 }}
               >
                 {i.name}
               </Text>
               <Text style={{ color: colors.muted, fontSize: 13 }}>
-                {i.strength || "Strength not recorded"}
+                {i.strength || 'Strength not recorded'}
               </Text>
             </View>
           ))
         ) : (
           <Text style={{ color: colors.muted }}>
-            No ingredients recorded. Duplicate ingredient checks will be
-            incomplete.
+            No ingredients recorded. Duplicate ingredient checks will be incomplete.
           </Text>
         )}
       </Card>
@@ -143,13 +138,12 @@ export default function ProductDetails() {
       <Section title="Source & identifiers" />
       <Card>
         <Detail label="Information source" value={p.source} />
-        <Detail label="Last verification date" value={p.verified_at ?? ""} />
-        <Detail label="Registered identifiers" value={p.barcodes.join("\n")} />
+        <Detail label="Last verification date" value={p.verified_at ?? ''} />
+        <Detail label="Registered identifiers" value={p.barcodes.join('\n')} />
       </Card>
       <Notice>
-        MedTrace provides product information, not diagnosis, prescribing or
-        personal dosage advice. Ask a qualified pharmacist if you are unsure
-        about a medicine.
+        MedTrace provides product information, not diagnosis, prescribing or personal dosage advice.
+        Ask a qualified pharmacist if you are unsure about a medicine.
       </Notice>
     </Page>
   );

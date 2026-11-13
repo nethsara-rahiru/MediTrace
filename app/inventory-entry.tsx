@@ -1,21 +1,11 @@
-import { useState } from "react";
-import { Pressable, Text, View } from "react-native";
-import { router, useLocalSearchParams } from "expo-router";
-import {
-  Page,
-  Back,
-  Heading,
-  Card,
-  Field,
-  Button,
-  Notice,
-  Empty,
-  Badge,
-} from "../src/components/ui";
-import { useData } from "../src/data/context";
-import { saveInventory, removeInventory } from "../src/data/inventory";
-import { reconcileReminders } from "../src/services/reminders";
-import { colors } from "../src/theme";
+import { useState } from 'react';
+import { Pressable, Text, View } from 'react-native';
+import { router, useLocalSearchParams } from 'expo-router';
+import { Page, Back, Heading, Card, Field, Button, Notice, Empty } from '../src/components/ui';
+import { useData } from '../src/data/context';
+import { saveInventory, removeInventory } from '../src/data/inventory';
+import { reconcileReminders } from '../src/services/reminders';
+import { colors } from '../src/theme';
 export default function InventoryEntry() {
   const params = useLocalSearchParams<{
     id?: string;
@@ -26,30 +16,24 @@ export default function InventoryEntry() {
   }>();
   const { db, products, inventory, mutate } = useData();
   const existing = inventory.find((i) => i.id === Number(params.id));
-  const [productId, setProductId] = useState(
-      existing?.product_id ?? Number(params.productId ?? 0),
-    ),
-    [query, setQuery] = useState("");
+  const [productId, setProductId] = useState(existing?.product_id ?? Number(params.productId ?? 0)),
+    [query, setQuery] = useState('');
   const [quantity, setQuantity] = useState(String(existing?.quantity ?? 1)),
-    [unit, setUnit] = useState(existing?.unit ?? "units"),
-    [batch, setBatch] = useState(existing?.batch ?? params.batch ?? "");
-  const initialExpiry = existing?.expiry ?? params.expiry ?? "";
-  const month =
-    existing?.expiry_precision === "month" ||
-    params.expiryPrecision === "month";
-  const [expiry, setExpiry] = useState(
-      month ? initialExpiry.slice(0, 7) : initialExpiry,
-    ),
-    [error, setError] = useState(""),
+    [unit, setUnit] = useState(existing?.unit ?? 'units'),
+    [batch, setBatch] = useState(existing?.batch ?? params.batch ?? '');
+  const initialExpiry = existing?.expiry ?? params.expiry ?? '';
+  const month = existing?.expiry_precision === 'month' || params.expiryPrecision === 'month';
+  const [expiry, setExpiry] = useState(month ? initialExpiry.slice(0, 7) : initialExpiry),
+    [error, setError] = useState(''),
     [busy, setBusy] = useState(false),
     [confirmDelete, setConfirmDelete] = useState(false);
   const product = products.find((p) => p.id === productId);
   async function save() {
-    setError("");
+    setError('');
     setBusy(true);
     try {
-      if (!product) throw new Error("Select a product from your library.");
-      if (!quantity.trim()) throw new Error("Enter the quantity.");
+      if (!product) throw new Error('Select a product from your library.');
+      if (!quantity.trim()) throw new Error('Enter the quantity.');
       await mutate(() =>
         saveInventory(
           db,
@@ -59,13 +43,13 @@ export default function InventoryEntry() {
             unit,
             batch,
             expiry,
-            expiry_source: "User-confirmed packaging information",
+            expiry_source: 'User-confirmed packaging information',
           },
           existing?.id,
         ),
       );
       await reconcileReminders(db).catch(() => undefined);
-      router.replace("/inventory");
+      router.replace('/inventory');
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -78,7 +62,7 @@ export default function InventoryEntry() {
     try {
       await mutate(() => removeInventory(db, existing.id));
       await reconcileReminders(db).catch(() => undefined);
-      router.replace("/inventory");
+      router.replace('/inventory');
     } catch (e) {
       setError((e as Error).message);
     } finally {
@@ -89,7 +73,7 @@ export default function InventoryEntry() {
     <Page>
       <Back label="My medicines" />
       <Heading
-        title={existing ? "Manage medicine" : "Add to my medicines"}
+        title={existing ? 'Manage medicine' : 'Add to my medicines'}
         subtitle="Record a particular pack. Batch and expiry may differ between packs."
       />
       {error && <Notice tone="red">{error}</Notice>}
@@ -97,12 +81,7 @@ export default function InventoryEntry() {
         <Empty
           title="Register a product first"
           description="A library product gives each inventory entry a consistent identity."
-          action={
-            <Button
-              title="Register product"
-              onPress={() => router.push("/add-product")}
-            />
-          }
+          action={<Button title="Register product" onPress={() => router.push('/add-product')} />}
         />
       ) : (
         <>
@@ -112,16 +91,14 @@ export default function InventoryEntry() {
                 <Text
                   style={{
                     fontSize: 19,
-                    fontWeight: "700",
+                    fontWeight: '700',
                     color: colors.navy,
                   }}
                 >
                   {product.name}
                 </Text>
                 <Text style={{ color: colors.muted }}>
-                  {[product.strength, product.dosage_form]
-                    .filter(Boolean)
-                    .join(" · ")}
+                  {[product.strength, product.dosage_form].filter(Boolean).join(' · ')}
                 </Text>
                 {!existing && (
                   <Button
@@ -141,9 +118,7 @@ export default function InventoryEntry() {
                 />
                 {products
                   .filter((p) =>
-                    (p.name + " " + p.generic_name)
-                      .toLowerCase()
-                      .includes(query.toLowerCase()),
+                    (p.name + ' ' + p.generic_name).toLowerCase().includes(query.toLowerCase()),
                   )
                   .map((p) => (
                     <Pressable
@@ -158,13 +133,11 @@ export default function InventoryEntry() {
                         gap: 5,
                       }}
                     >
-                      <Text style={{ color: colors.navy, fontWeight: "600" }}>
+                      <Text style={{ color: colors.navy, fontWeight: '600' }}>
                         {p.name} {p.strength}
                       </Text>
                       <Text style={{ color: colors.muted, fontSize: 12 }}>
-                        {p.pack_size ||
-                          p.dosage_form ||
-                          "Pack details not recorded"}
+                        {p.pack_size || p.dosage_form || 'Pack details not recorded'}
                       </Text>
                     </Pressable>
                   ))}
@@ -174,9 +147,7 @@ export default function InventoryEntry() {
           {product && (
             <>
               <Card>
-                <View
-                  style={{ flexDirection: "row", flexWrap: "wrap", gap: 16 }}
-                >
+                <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 16 }}>
                   <Field
                     label="Quantity *"
                     value={quantity}
@@ -206,14 +177,11 @@ export default function InventoryEntry() {
                 />
               </Card>
               <Notice>
-                Confirm batch and expiry against the physical package before
-                saving. Changing the quantity does not record or recommend a
-                dose.
+                Confirm batch and expiry against the physical package before saving. Changing the
+                quantity does not record or recommend a dose.
               </Notice>
               <Button
-                title={
-                  existing ? "Save inventory changes" : "Add medicine locally"
-                }
+                title={existing ? 'Save inventory changes' : 'Add medicine locally'}
                 onPress={save}
                 busy={busy}
               />
@@ -221,15 +189,9 @@ export default function InventoryEntry() {
                 (confirmDelete ? (
                   <Card>
                     <Text style={{ color: colors.text }}>
-                      Remove this inventory entry? The library product and scan
-                      history will remain.
+                      Remove this inventory entry? The library product and scan history will remain.
                     </Text>
-                    <Button
-                      title="Confirm removal"
-                      variant="danger"
-                      onPress={remove}
-                      busy={busy}
-                    />
+                    <Button title="Confirm removal" variant="danger" onPress={remove} busy={busy} />
                     <Button
                       title="Keep entry"
                       variant="secondary"

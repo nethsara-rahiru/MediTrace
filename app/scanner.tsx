@@ -1,46 +1,27 @@
-import { useCallback, useRef, useState } from "react";
-import { Platform, Pressable, StyleSheet, Text, View } from "react-native";
-import {
-  CameraView,
-  useCameraPermissions,
-  type BarcodeType,
-} from "expo-camera";
-import { router, useFocusEffect } from "expo-router";
-import {
-  Camera,
-  Flashlight,
-  Keyboard,
-  ScanLine,
-  ShieldCheck,
-} from "lucide-react-native";
-import {
-  Page,
-  Back,
-  Heading,
-  Card,
-  Button,
-  Field,
-  Chips,
-  Notice,
-} from "../src/components/ui";
-import { colors } from "../src/theme";
+import { useCallback, useRef, useState } from 'react';
+import { Platform, Pressable, StyleSheet, Text, View } from 'react-native';
+import { CameraView, useCameraPermissions, type BarcodeType } from 'expo-camera';
+import { router, useFocusEffect } from 'expo-router';
+import { Camera, Flashlight, Keyboard, ScanLine } from 'lucide-react-native';
+import { Page, Back, Heading, Card, Button, Field, Chips, Notice } from '../src/components/ui';
+import { colors } from '../src/theme';
 const barcodeTypes: BarcodeType[] = [
-  "ean13",
-  "ean8",
-  "upc_a",
-  "upc_e",
-  "code128",
-  "qr",
-  "datamatrix",
+  'ean13',
+  'ean8',
+  'upc_a',
+  'upc_e',
+  'code128',
+  'qr',
+  'datamatrix',
 ];
 export default function Scanner() {
   const [permission, requestPermission] = useCameraPermissions(),
     [torch, setTorch] = useState(false),
     [active, setActive] = useState(false),
-    [cameraError, setCameraError] = useState("");
+    [cameraError, setCameraError] = useState('');
   const [manual, setManual] = useState(false),
-    [value, setValue] = useState(""),
-    [format, setFormat] = useState("Auto");
+    [value, setValue] = useState(''),
+    [format, setFormat] = useState('Auto');
   const locked = useRef(false);
   useFocusEffect(
     useCallback(() => {
@@ -54,7 +35,7 @@ export default function Scanner() {
   function scan(raw: string, type: string) {
     if (locked.current || !raw.trim()) return;
     locked.current = true;
-    router.push({ pathname: "/scan-result", params: { raw, format: type } });
+    router.push({ pathname: '/scan-result', params: { raw, format: type } });
   }
   return (
     <Page>
@@ -78,25 +59,21 @@ export default function Scanner() {
             <Camera size={46} color="#91B9B8" />
             <Text style={s.cameraTitle}>
               {manual
-                ? "Manual entry selected"
+                ? 'Manual entry selected'
                 : cameraError
-                  ? "Camera unavailable"
+                  ? 'Camera unavailable'
                   : permission?.granted
-                    ? "Camera paused"
-                    : "Your camera, your control"}
+                    ? 'Camera paused'
+                    : 'Your camera, your control'}
             </Text>
             <Text style={s.cameraText}>
               {cameraError ||
-                "Camera access is used to read packaging codes. Images are not uploaded or saved."}
+                'Camera access is used to read packaging codes. Images are not uploaded or saved.'}
             </Text>
             {!permission?.granted && !manual && (
               <Button
                 title="Allow camera access"
-                onPress={() =>
-                  void requestPermission().catch((e) =>
-                    setCameraError(e.message),
-                  )
-                }
+                onPress={() => void requestPermission().catch((e) => setCameraError(e.message))}
               />
             )}
           </View>
@@ -106,9 +83,7 @@ export default function Scanner() {
             <View style={s.scanFrame}>
               <ScanLine color="rgba(255,255,255,.3)" size={45} />
             </View>
-            <Text style={s.scanTip}>
-              Align the packaging code inside the frame
-            </Text>
+            <Text style={s.scanTip}>Align the packaging code inside the frame</Text>
           </View>
         )}
         <View style={s.cameraBottom}>
@@ -118,9 +93,7 @@ export default function Scanner() {
           </View>
           <Pressable
             accessibilityRole="button"
-            accessibilityLabel={
-              torch ? "Turn flashlight off" : "Turn flashlight on"
-            }
+            accessibilityLabel={torch ? 'Turn flashlight off' : 'Turn flashlight on'}
             onPress={() => setTorch((v) => !v)}
             style={[s.flash, torch && { backgroundColor: colors.teal }]}
           >
@@ -128,10 +101,10 @@ export default function Scanner() {
           </Pressable>
         </View>
       </View>
-      <View style={{ flexDirection: "row", gap: 10 }}>
+      <View style={{ flexDirection: 'row', gap: 10 }}>
         <View style={{ flex: 1 }}>
           <Button
-            title={manual ? "Use camera" : "Enter code manually"}
+            title={manual ? 'Use camera' : 'Enter code manually'}
             variant="secondary"
             icon={<Keyboard color={colors.teal} size={17} />}
             onPress={() => setManual((v) => !v)}
@@ -150,16 +123,7 @@ export default function Scanner() {
           />
           <Text style={{ color: colors.muted, fontSize: 12 }}>Format</Text>
           <Chips
-            items={[
-              "Auto",
-              "EAN-13",
-              "EAN-8",
-              "UPC-A",
-              "UPC-E",
-              "Code 128",
-              "QR",
-              "GS1",
-            ]}
+            items={['Auto', 'EAN-13', 'EAN-8', 'UPC-A', 'UPC-E', 'Code 128', 'QR', 'GS1']}
             value={format}
             onChange={setFormat}
           />
@@ -171,14 +135,14 @@ export default function Scanner() {
                 value,
                 (
                   {
-                    Auto: "manual",
-                    "EAN-13": "ean13",
-                    "EAN-8": "ean8",
-                    "UPC-A": "upc_a",
-                    "UPC-E": "upc_e",
-                    "Code 128": "code128",
-                    QR: "qr",
-                    GS1: "gs1",
+                    Auto: 'manual',
+                    'EAN-13': 'ean13',
+                    'EAN-8': 'ean8',
+                    'UPC-A': 'upc_a',
+                    'UPC-E': 'upc_e',
+                    'Code 128': 'code128',
+                    QR: 'qr',
+                    GS1: 'gs1',
                   } as Record<string, string>
                 )[format],
               )
@@ -187,14 +151,14 @@ export default function Scanner() {
         </Card>
       )}
       <Notice>
-        Supports common retail barcodes, QR and DataMatrix where supported by
-        the device. GS1 parsing depends on the scanner preserving separators.
-        Unknown links are never opened automatically.
+        Supports common retail barcodes, QR and DataMatrix where supported by the device. GS1
+        parsing depends on the scanner preserving separators. Unknown links are never opened
+        automatically.
       </Notice>
-      {Platform.OS === "web" && (
+      {Platform.OS === 'web' && (
         <Notice>
-          Browser camera scanning varies by browser. Manual entry is available
-          for the preview; use an Android device to validate packaging scans.
+          Browser camera scanning varies by browser. Manual entry is available for the preview; use
+          an Android device to validate packaging scans.
         </Notice>
       )}
     </Page>
@@ -204,76 +168,76 @@ const s = StyleSheet.create({
   cameraWrap: {
     height: 400,
     borderRadius: 24,
-    backgroundColor: "#112D35",
-    overflow: "hidden",
+    backgroundColor: '#112D35',
+    overflow: 'hidden',
   },
   cameraEmpty: {
     flex: 1,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: 16,
     padding: 30,
     paddingBottom: 65,
   },
   cameraTitle: {
     fontSize: 21,
-    color: "white",
-    fontWeight: "600",
-    textAlign: "center",
+    color: 'white',
+    fontWeight: '600',
+    textAlign: 'center',
   },
   cameraText: {
     fontSize: 13,
-    color: "#B0C5C8",
-    textAlign: "center",
+    color: '#B0C5C8',
+    textAlign: 'center',
     lineHeight: 21,
     maxWidth: 360,
   },
   overlay: {
     ...StyleSheet.absoluteFill,
-    alignItems: "center",
-    justifyContent: "center",
+    alignItems: 'center',
+    justifyContent: 'center',
     gap: 25,
   },
   scanFrame: {
     width: 230,
     height: 190,
     borderWidth: 2,
-    borderColor: "#70D9C7",
+    borderColor: '#70D9C7',
     borderRadius: 22,
-    alignItems: "center",
-    justifyContent: "center",
-    backgroundColor: "rgba(8,127,120,.04)",
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'rgba(8,127,120,.04)',
   },
   scanTip: {
     fontSize: 12,
-    color: "white",
-    backgroundColor: "rgba(0,0,0,.35)",
+    color: 'white',
+    backgroundColor: 'rgba(0,0,0,.35)',
     padding: 10,
     borderRadius: 20,
   },
   cameraBottom: {
-    position: "absolute",
+    position: 'absolute',
     bottom: 20,
     left: 22,
     right: 22,
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
   },
-  cameraTag: { flexDirection: "row", gap: 7, alignItems: "center" },
-  dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: "#74D9C5" },
+  cameraTag: { flexDirection: 'row', gap: 7, alignItems: 'center' },
+  dot: { width: 5, height: 5, borderRadius: 3, backgroundColor: '#74D9C5' },
   cameraTagText: {
     fontSize: 9,
-    color: "#C2D8D6",
+    color: '#C2D8D6',
     letterSpacing: 1.5,
-    fontWeight: "600",
+    fontWeight: '600',
   },
   flash: {
     width: 44,
     height: 44,
     borderRadius: 14,
-    backgroundColor: "rgba(255,255,255,.12)",
-    alignItems: "center",
-    justifyContent: "center",
+    backgroundColor: 'rgba(255,255,255,.12)',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
