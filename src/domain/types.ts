@@ -7,6 +7,7 @@ export type Product = {
   strength: string;
   dosage_form: string;
   manufacturer: string;
+  manufacturer_address?: string;
   country: string;
   category: string;
   pack_size: string;
@@ -32,6 +33,9 @@ export type InventoryItem = {
   expiry: string | null;
   expiry_precision: ExpiryPrecision;
   expiry_source: string;
+  manufacturing_date?: string | null;
+  serial_number?: string;
+  verification_data?: string;
   created_at: string;
   name: string;
   strength: string;
@@ -50,6 +54,10 @@ export type Scan = {
   expiry: string | null;
   serial: string | null;
   notes: string;
+  extraction_data?: string | null;
+  reviewed_data?: string | null;
+  verification_status?: string;
+  package_id?: number | null;
   scanned_at: string;
   name: string | null;
 };
