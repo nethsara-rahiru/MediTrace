@@ -1,42 +1,12 @@
+import { database } from './helpers/database';
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
-import { DatabaseSync } from 'node:sqlite';
-import type { SQLiteDatabase } from 'expo-sqlite';
 import { migrate } from '../src/data/schema';
 import { saveProduct, listProducts, getProduct, findProduct } from '../src/data/products';
 import { saveInventory, listInventory } from '../src/data/inventory';
 import { recordScan, listHistory } from '../src/data/history';
 import { decodeScan } from '../src/domain/scan';
 import type { ProductInput } from '../src/domain/types';
-async function database() {
-  const native = new DatabaseSync(':memory:');
-  const db = {
-    execAsync: async (sql: string) => {
-      native.exec(sql);
-    },
-    getFirstAsync: async (sql: string, ...args: any[]) => native.prepare(sql).get(...args) ?? null,
-    getAllAsync: async (sql: string, ...args: any[]) => native.prepare(sql).all(...args),
-    runAsync: async (sql: string, ...args: any[]) => {
-      const r = native.prepare(sql).run(...args);
-      return {
-        lastInsertRowId: Number(r.lastInsertRowid),
-        changes: Number(r.changes),
-      };
-    },
-    withTransactionAsync: async (action: () => Promise<void>) => {
-      native.exec('BEGIN');
-      try {
-        await action();
-        native.exec('COMMIT');
-      } catch (e) {
-        native.exec('ROLLBACK');
-        throw e;
-      }
-    },
-  } as unknown as SQLiteDatabase;
-  await migrate(db);
-  return { db, native };
-}
 const fixture = (name = 'Test product'): ProductInput => ({
   name,
   generic_name: 'Example ingredient',
