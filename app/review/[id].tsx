@@ -128,6 +128,13 @@ export default function ReviewMedicine() {
   const bySerial = serial
     ? inventory.find((i) => i.product_id === identity.productId && i.serial_number === serial)
     : undefined;
+  const serialConflict = Boolean(
+    bySerial &&
+    ((bySerial.batch && bySerial.batch !== batch) ||
+      (bySerial.expiry && bySerial.expiry !== (parsedExpiry?.expiry ?? null)) ||
+      (bySerial.manufacturing_date &&
+        bySerial.manufacturing_date !== reviewed.fields.manufacturingDate.value)),
+  );
   const similar =
     !bySerial && Boolean(batch || expiry)
       ? inventory.filter(
@@ -138,6 +145,8 @@ export default function ReviewMedicine() {
         )
       : [];
   async function apply(key: FieldKey, text?: string, token?: Token) {
+    setChecked(false);
+    setDuplicate(undefined);
     const next = await mutate(async () => {
       const fresh = await getSession(db, session!.id);
       if (!fresh?.reviewed) throw new Error('Scan review is unavailable.');
@@ -145,12 +154,45 @@ export default function ReviewMedicine() {
         text === undefined
           ? verifyField(fresh.reviewed, key)
           : editField(fresh.reviewed, key, text, token);
-      await persistReview(db, session!.id, updated);
-      return updated;
+      return persistReview(db, session!.id, updated);
     });
     setSession({ ...session!, reviewed: next });
+  }
+  async function useRecordedPack() {
+    if (!bySerial) return;
+    setBusy(true);
     setChecked(false);
-    setDuplicate(undefined);
+    setError('');
+    try {
+      const next = await mutate(async () => {
+        const current = await getSession(db, session!.id);
+        if (!current?.reviewed) throw new Error('Scan review is unavailable.');
+        let changed = editField(current.reviewed, 'batchNumber', bySerial.batch);
+        changed = editField(
+          changed,
+          'expiryDate',
+          bySerial.expiry_precision === 'month'
+            ? (bySerial.expiry ?? '').slice(0, 7)
+            : (bySerial.expiry ?? ''),
+        );
+        changed = editField(changed, 'manufacturingDate', bySerial.manufacturing_date ?? '');
+        await persistReview(db, session!.id, changed);
+        return changed;
+      });
+      setSession({ ...session!, reviewed: next });
+      setDirty(
+        (previous) =>
+          new Set(
+            [...previous].filter(
+              (key) => !['batchNumber', 'manufacturingDate', 'expiryDate'].includes(key),
+            ),
+          ),
+      );
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
   }
   async function changeIdentity() {
     setBusy(true);
@@ -303,12 +345,40 @@ export default function ReviewMedicine() {
       {!saved ? (
         <>
           <Section title="Save this pack" />
-          {bySerial && (
-            <Notice>
-              This serial is already recorded. Saving will link this scan to the existing entry
-              without increasing its quantity.
-            </Notice>
-          )}
+          {bySerial &&
+            (serialConflict ? (
+              <Card>
+                <Notice tone="amber">
+                  This serial is already recorded, but the package fields disagree. Compare the
+                  physical pack with the recorded entry before saving.
+                </Notice>
+                <Text style={{ color: colors.muted, fontSize: 13, lineHeight: 22 }}>
+                  Recorded batch: {bySerial.batch || 'Unknown'}
+                  {'\n'}Recorded expiry:{' '}
+                  {bySerial.expiry_precision === 'month'
+                    ? bySerial.expiry?.slice(0, 7)
+                    : (bySerial.expiry ?? 'Unknown')}
+                </Text>
+                <Button
+                  title="Use existing package details"
+                  variant="secondary"
+                  onPress={() => void useRecordedPack()}
+                  busy={busy}
+                />
+                <Button
+                  title="Manage recorded medicine"
+                  variant="secondary"
+                  onPress={() =>
+                    router.push({ pathname: '/inventory-entry', params: { id: bySerial.id } })
+                  }
+                />
+              </Card>
+            ) : (
+              <Notice>
+                This serial is already recorded. Saving will link this scan to the existing entry
+                without increasing its quantity.
+              </Notice>
+            ))}
           {similar.length > 0 && (
             <Card>
               <Text style={{ color: colors.navy, fontWeight: '700', fontSize: 16 }}>
@@ -367,12 +437,13 @@ export default function ReviewMedicine() {
             <Notice tone="amber">Apply your field corrections before saving.</Notice>
           )}
           <Button
-            title="Save verified package locally"
+            title="Save checked package locally"
             busy={busy}
             disabled={
               !checked ||
               dirty.size > 0 ||
               Boolean(chronology) ||
+              serialConflict ||
               Boolean(similar.length && !duplicate) ||
               Boolean((reviewed.identityConflict || identity.override) && !conflict)
             }
@@ -396,6 +467,13 @@ export default function ReviewMedicine() {
             onPress={() => router.replace('/scanner')}
           />
         </>
+      )}
+      {!saved && (
+        <Button
+          title="Scan another package"
+          variant="secondary"
+          onPress={() => router.replace('/scanner')}
+        />
       )}
       <Notice>
         MedTrace does not diagnose, prescribe or recommend doses. A code and a user confirmation do

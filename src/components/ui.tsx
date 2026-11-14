@@ -263,7 +263,7 @@ export const s = StyleSheet.create({
   },
   primary: { backgroundColor: colors.teal },
   secondary: { backgroundColor: colors.mint },
-  buttonText: { fontSize: 14, fontWeight: '700' },
+  buttonText: { fontSize: 14, fontWeight: '700', flexShrink: 1, textAlign: 'center' },
   badge: {
     flexDirection: 'row',
     alignItems: 'center',
