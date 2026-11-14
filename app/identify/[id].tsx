@@ -6,6 +6,10 @@ import { Page, Back, Heading, Card, Badge, Button, Field, Notice } from '../../s
 import { useIdentification } from '../../src/hooks/useIdentification';
 import { useData } from '../../src/data/context';
 import { acceptIdentity, rejectIdentity } from '../../src/data/identification';
+import {
+  bestIdentitySuggestion,
+  otherIdentitySuggestions,
+} from '../../src/domain/extraction/suggestions';
 import type { Candidate } from '../../src/domain/extraction/types';
 import { colors } from '../../src/theme';
 export default function ConfirmMedicine() {
@@ -16,6 +20,7 @@ export default function ConfirmMedicine() {
   const { products } = useData();
   const [selected, setSelected] = useState<Candidate | null>(null),
     [correcting, setCorrecting] = useState(false),
+    [rejectedKeys, setRejectedKeys] = useState<string[]>([]),
     [manual, setManual] = useState(false),
     [query, setQuery] = useState(''),
     [name, setName] = useState(''),
@@ -58,26 +63,20 @@ export default function ConfirmMedicine() {
       </Page>
     );
   const original = session.original;
-  const defaultCandidate = original.candidates.find(
-    (c) => c.productId === original.predictedProductId && c.productId !== null,
-  );
-  const chosen = selected ?? (session.state === 'rejected' ? null : defaultCandidate) ?? null;
-  const predictedName =
-    chosen?.name ?? (session.state === 'rejected' ? null : original.fields.productName.value);
-  const predictedStrength =
-    chosen?.strength ?? (session.state === 'rejected' ? null : original.fields.strength.value);
-  const predictedForm =
-    chosen?.dosageForm ?? (session.state === 'rejected' ? null : original.fields.dosageForm.value);
-  const showCorrection = correcting || session.state === 'rejected' || !predictedName;
-  const ambiguous =
-    original.predictedProductId === null &&
-    original.candidates.filter((c) => c.productId !== null && c.score >= 0.8).length > 1 &&
-    !selected;
+  const defaultCandidate = bestIdentitySuggestion(original);
+  const chosen = selected ?? (session.state === 'rejected' ? null : defaultCandidate);
+  const predictedName = chosen?.name ?? null;
+  const predictedStrength = chosen?.strength ?? null;
+  const predictedForm = chosen?.dosageForm ?? null;
+  const showCorrection =
+    manual || (!selected && (correcting || session.state === 'rejected' || !predictedName));
   async function reject() {
     setBusy(true);
     setError('');
     try {
+      const rejected = selected ?? bestIdentitySuggestion(session!.original);
       await mutate(() => rejectIdentity(db, session!.id));
+      if (rejected) setRejectedKeys((keys) => [...new Set([...keys, rejected.key])]);
       setSession({
         ...session!,
         state: 'rejected',
@@ -121,22 +120,23 @@ export default function ConfirmMedicine() {
   }
   function pick(candidate: Candidate) {
     setSelected(candidate);
+    setCorrecting(false);
     setManual(false);
     setName('');
   }
-  const possible = original.candidates.filter(
-    (c) =>
-      session.state !== 'rejected' ||
-      original.predictedProductId === null ||
-      c.productId !== original.predictedProductId,
-  );
+  const excluded = rejectedKeys.length
+    ? rejectedKeys
+    : session.state === 'rejected' && defaultCandidate
+      ? [defaultCandidate.key]
+      : [];
+  const possible = otherIdentitySuggestions(original, excluded);
   const search = query.trim().toLowerCase();
   return (
     <Page>
       <Back label="Scanner" />
       <Heading
         title="Is this your medicine?"
-        subtitle="Please compare the detected medicine name and strength with the information printed on the medicine packaging."
+        subtitle="Is this the largest medicine name printed on the box? Check its spelling and strength against the packaging."
       />
       {Boolean(error) && <Notice tone="red">{error}</Notice>}
       {predictedName && !manual ? (
@@ -153,14 +153,18 @@ export default function ConfirmMedicine() {
             {predictedName}
             {predictedStrength ? ` ${predictedStrength}` : ''}
           </Text>
+          {Boolean(chosen?.packSize) && (
+            <Text style={{ color: colors.muted, fontSize: 13 }}>Pack: {chosen?.packSize}</Text>
+          )}
           {Boolean(predictedForm) && (
             <Text style={{ color: colors.muted, fontSize: 15 }}>{predictedForm}</Text>
           )}
         </Card>
       ) : (
         <Notice>
-          We could not identify this medicine automatically. Please enter the medicine name printed
-          on the packaging.
+          {session.state === 'rejected'
+            ? 'Choose another suggestion, search the library or enter the medicine name printed on the box.'
+            : 'We could not identify this medicine automatically. Please enter the medicine name printed on the packaging.'}
         </Notice>
       )}
       {original.identityConflict && (
@@ -169,13 +173,7 @@ export default function ConfirmMedicine() {
           continuing.
         </Notice>
       )}
-      {ambiguous && (
-        <Notice tone="amber">
-          Several local products may match. Select the exact name and strength below before
-          confirming.
-        </Notice>
-      )}
-      {showCorrection || ambiguous ? (
+      {showCorrection ? (
         <Card>
           <Text style={{ fontSize: 17, fontWeight: '700', color: colors.navy }}>
             Find the correct identity
@@ -274,7 +272,7 @@ export default function ConfirmMedicine() {
           title={manual ? 'Confirm entered medicine' : 'Yes, correct medicine'}
           onPress={() => void confirm()}
           busy={busy}
-          disabled={manual ? !name.trim() : ambiguous}
+          disabled={manual ? !name.trim() : false}
         />
       )}
       {predictedName && !manual && (
