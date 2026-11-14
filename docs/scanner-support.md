@@ -7,8 +7,9 @@ compatibility. Android and iOS acceptance checks are still required.
 The app prefers the Android raw payload where available. Explicit GS1 symbology
 identifiers, human-readable `(01)` data, or GS-separated element strings activate
 the GS1 parser. The manual GS1 option supports an explicit user interpretation
-when the native decoder strips the symbology identifier. The result screen also
-offers this interpretation for a plausible DataMatrix/Code 128 prefix.
+when the native decoder strips the symbology identifier. The extraction engine also recognizes a fully valid GS1-shaped
+DataMatrix/Code 128 payload when the indicator is missing, flags that inference,
+and still requires user confirmation.
 
 Variable fields consume through ASCII 29 or the end of the symbol. A missing
 separator cannot always be detected: an apparently valid final lot number may
@@ -23,3 +24,9 @@ standards examples that are never seeded into the product catalog.
 
 On Android, test tiny DataMatrix codes in the centre of the camera frame, on flat
 packaging, with adequate light. Browser scanning is only a convenience preview.
+
+New scans pass through identity confirmation before field review. JSON objects,
+English keyword/label fields, unlabelled patterns, local name/ingredient matching
+and reviewed structural templates are supported. AI 11 adds manufacturing date
+with month/day precision. Direct field evidence and unresolved extra values remain
+local; URLs are never fetched. Details are in [the feature guide](intelligent-identification.md).

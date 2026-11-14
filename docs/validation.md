@@ -1,5 +1,21 @@
 # Validation record
 
+## Intelligent identification — 14 November 2026
+
+- TypeScript and formatting: passed.
+- Domain, extraction, SQLite and optional-adapter tests: **54 passed**.
+- Playwright browser flows: **5 passed**, including offline repeated-save,
+  confirmation/deep-link gating, correction, duplicate handling, inventory deletion,
+  persisted evidence and mobile layouts.
+- Production web export and Android JavaScript/Hermes bundle export: passed.
+
+Fixtures remain synthetic and isolated; no production medicine data is seeded.
+[Delivery report](identification-delivery.md) includes the file manifest, schema,
+setup, boundaries and remaining device acceptance work. New feature screenshots
+show a synthetic scan; the original overview screenshots show an empty catalog.
+
+## Original application — 13 November 2026
+
 Checked on 13 November 2026 in the development workspace with Node.js 24 and
 Chromium. These are local results, not claims about a signed Android build or
 GitHub Actions runs.
