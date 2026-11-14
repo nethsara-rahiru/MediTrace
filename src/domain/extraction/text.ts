@@ -11,13 +11,18 @@ export function normalizeForm(value: string) {
   return normalizeName(value).replace(/\b(tablet|capsule|drop)s\b/g, '$1');
 }
 export function strengthOf(value: string): string | null {
-  return (
-    value
-      .match(
-        /\b\d+(?:\.\d+)?\s*(?:mcg|μg|ug|mg|kg|g|ml|iu|units?|%)(?:\s*\/\s*(?:\d+(?:\.\d+)?\s*)?(?:ml|g|tablet|capsule))?(?![a-z])/i,
-      )?.[0]
-      .trim() ?? null
-  );
+  const pattern =
+    /\b\d+(?:\.\d+)?\s*(?:mcg|μg|ug|mg|kg|g|ml|iu|units?|%)(?:\s*\/\s*(?:\d+(?:\.\d+)?\s*)?(?:ml|g|tablet|capsule))?(?![a-z])/gi;
+  const matches = [...value.matchAll(pattern)];
+  if (!matches.length) return null;
+  const first = matches[0];
+  let last = first;
+  for (const current of matches.slice(1)) {
+    const between = value.slice(last.index! + last[0].length, current.index);
+    if (!/^[\s+/,]*(?:and[\s+]*)?$/i.test(between)) break;
+    last = current;
+  }
+  return value.slice(first.index, last.index! + last[0].length).trim();
 }
 export function formOf(value: string): string | null {
   return (

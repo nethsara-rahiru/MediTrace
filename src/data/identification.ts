@@ -16,7 +16,13 @@ import {
   type Identity,
   type Session,
 } from '../domain/extraction/types';
-import { nameOf, normalizeName, strengthOf, formOf } from '../domain/extraction/text';
+import {
+  nameOf,
+  normalizeName,
+  normalizeForm,
+  strengthOf,
+  formOf,
+} from '../domain/extraction/text';
 import { parseExpiry } from '../domain/expiry';
 import { findProduct, getProduct, listProducts, saveProduct } from './products';
 import { listTemplates, learnTemplate } from './templates';
@@ -168,7 +174,8 @@ export async function acceptIdentity(
   let product = input.productId ? await getProduct(db, input.productId) : null;
   if (input.productId && !product) throw new Error('The selected product is no longer available.');
   const enteredName = input.name?.trim() ?? session.original.fields.productName.value ?? '';
-  const name = product?.name ?? nameOf(enteredName) ?? '';
+  const name =
+    product?.name ?? (strengthOf(enteredName) ? nameOf(enteredName) : enteredName.trim()) ?? '';
   const strength = product?.strength || input.strength?.trim() || strengthOf(enteredName) || null;
   const dosageForm =
     product?.dosage_form || input.dosageForm?.trim() || formOf(enteredName) || null;
@@ -199,7 +206,11 @@ export async function acceptIdentity(
   const changed =
     session.rejectionCount > 0 ||
     session.original.predictedProductId !== initial.productId ||
-    normalizeName(session.original.fields.productName.value ?? '') !== normalizeName(name);
+    normalizeName(session.original.fields.productName.value ?? '') !== normalizeName(name) ||
+    (session.original.fields.strength.value ?? '').toLowerCase().replace(/\s/g, '') !==
+      (strength ?? '').toLowerCase().replace(/\s/g, '') ||
+    normalizeForm(session.original.fields.dosageForm.value ?? '') !==
+      normalizeForm(dosageForm ?? '');
   const reviewed = confirmIdentity(session.original, initial, product, changed);
   if (initial.override) reviewed.identityConflict = true;
   await db.runAsync(

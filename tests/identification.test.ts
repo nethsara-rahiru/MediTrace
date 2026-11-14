@@ -352,3 +352,17 @@ test('changing a barcode reruns ownership validation and never reassigns another
     native.close();
   }
 });
+
+test('changing strength clears the rejected formulation even when its brand name stays the same', async () => {
+  const { db, native } = await database();
+  try {
+    const id = await beginIdentification(db, raw, 'qr', 'different-strength');
+    const s = await acceptIdentity(db, id, { name: 'Alphamed', strength: '250mg' });
+    assert.equal(s.reviewed!.fields.strength.value, '250mg');
+    assert.equal(s.reviewed!.fields.activeIngredients.value, null);
+    assert.equal(s.reviewed!.fields.manufacturer.value, null);
+    assert.equal(s.original.fields.activeIngredients.value?.[0].strength, '500mg');
+  } finally {
+    native.close();
+  }
+});

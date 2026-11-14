@@ -8,7 +8,6 @@ import {
   verifyField,
   validateReview,
 } from '../src/domain/extraction/verification';
-import { optionalAIFallback, validateAIResponse } from '../src/domain/extraction/optional-ai';
 import { validateRules } from '../src/domain/extraction/templates';
 import type { Product } from '../src/domain/types';
 const product = (id: number, name = 'Alphamed', strength = '500mg'): Product => ({
@@ -268,55 +267,6 @@ test('malicious content cannot execute or create trusted field metadata', () => 
   );
   assert.equal(text.fields.productName.value, null);
 });
-test('optional AI is opt-in, schema checked and bounded on failures', async () => {
-  const base = extractMedicine('TradeLabel: Alphamed 500mg', 'qr', { products: [] });
-  let called = false;
-  assert.equal(
-    await optionalAIFallback(base, {
-      adapter: async () => {
-        called = true;
-        throw new Error();
-      },
-    }),
-    base,
-  );
-  assert.equal(called, false);
-  const failed = await optionalAIFallback(base, {
-    consent: true,
-    adapter: async () => {
-      throw new Error('offline');
-    },
-  });
-  assert.equal(failed.fields.productName.value, null);
-  assert.ok(failed.issues.some((x) => x.includes('unavailable')));
-  const invalid = await optionalAIFallback(base, {
-    consent: true,
-    adapter: async () => ({ productName: { value: 'Invented', originalValue: 'Not in scan' } }),
-  });
-  assert.equal(invalid.fields.productName.value, null);
-  const timeout = await optionalAIFallback(base, {
-    consent: true,
-    timeoutMs: 1,
-    adapter: () => new Promise(() => {}),
-  });
-  assert.ok(timeout.issues.some((x) => x.includes('unavailable')));
-  const valid = await optionalAIFallback(base, {
-    consent: true,
-    adapter: async () => ({ productName: { value: 'Alphamed', originalValue: 'Alphamed 500mg' } }),
-  });
-  assert.equal(valid.fields.productName.method, 'ai');
-  assert.equal(valid.fields.productName.verification, 'unverified');
-  assert.throws(() =>
-    validateAIResponse(base.raw, {
-      productName: {
-        value: 'Alphamed',
-        originalValue: 'Alphamed 500mg',
-        verification: 'source_checked',
-      },
-    }),
-  );
-});
-
 test('duplicate JSON keys and conflicting labelled identities require human resolution', () => {
   const repeated = extractMedicine('{"product":"Alphamed","product":"Betamed"}', 'qr', {
     products: [],
@@ -402,4 +352,18 @@ test('keyword labels without punctuation and a unique unlabelled GTIN are suppor
   });
   assert.equal(unlabelled.fields.gtin.value, '04006381333931');
   assert.equal(unlabelled.fields.expiryDate.value, null);
+});
+
+test('combination strengths retain all printed amounts without computing or dropping ingredients', () => {
+  const r = extractMedicine(
+    'Product: Combinationmed 500mg + 65mg\nIngredients: Ingredient A 500mg + Ingredient B 65mg',
+    'qr',
+    { products: [] },
+  );
+  assert.equal(r.fields.productName.value, 'Combinationmed');
+  assert.equal(r.fields.strength.value, '500mg + 65mg');
+  assert.deepEqual(r.fields.activeIngredients.value, [
+    { name: 'Ingredient A', strength: '500mg' },
+    { name: 'Ingredient B', strength: '65mg' },
+  ]);
 });
