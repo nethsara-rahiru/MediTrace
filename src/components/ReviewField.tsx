@@ -99,6 +99,14 @@ export function ReviewField({
           }
         />
       </View>
+      {fieldKey === 'activeIngredients' &&
+        field.method === 'pattern' &&
+        field.verification === 'unverified' && (
+          <Notice tone="amber">
+            Possible ingredient only. Compare it with the ingredients printed on the packaging
+            before confirming; it could be another product name.
+          </Notice>
+        )}
       {readOnly ? (
         <Text selectable style={{ color: colors.text, lineHeight: 23 }}>
           {initial || 'Not recorded'}

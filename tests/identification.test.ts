@@ -385,3 +385,29 @@ test('removing inventory preserves scan evidence and prevents accidental recreat
     native.close();
   }
 });
+
+test('confirmed first identity persists its tentative ingredient without changing original scan', async () => {
+  const { db, native } = await database();
+  try {
+    const id = await beginIdentification(
+      db,
+      'Alphamed500mg\nExamplecompound250mg',
+      'qr',
+      'ingredient-fallback',
+    );
+    await acceptIdentity(db, id, { name: 'Alphamed', strength: '500mg' });
+    const stored = (await getSession(db, id))!;
+    assert.equal(stored.original.fields.activeIngredients.value, null);
+    assert.equal(stored.reviewed!.fields.activeIngredients.value?.[0].name, 'Examplecompound');
+    assert.equal(stored.reviewed!.fields.activeIngredients.verification, 'unverified');
+    assert.equal(stored.reviewed!.fields.activeIngredients.confidence, 'low');
+    const corrected = editField(stored.reviewed!, 'activeIngredients', 'Correctedcompound 100mg');
+    await persistReview(db, id, corrected);
+    assert.equal(
+      (await getSession(db, id))!.reviewed!.fields.activeIngredients.value?.[0].name,
+      'Correctedcompound',
+    );
+  } finally {
+    native.close();
+  }
+});
