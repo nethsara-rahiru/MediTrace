@@ -194,7 +194,7 @@ export default function ConfirmMedicine() {
               }}
             >
               <Text style={{ color: colors.navy, fontWeight: '600' }}>
-                {[c.name, c.strength, c.dosageForm].filter(Boolean).join(' · ')}
+                {[c.name, c.strength, c.dosageForm, c.packSize].filter(Boolean).join(' · ')}
               </Text>
               <Text style={{ fontSize: 11, color: colors.muted }}>
                 {c.productId ? 'Local product suggestion' : 'Possible text identity'}
@@ -219,7 +219,9 @@ export default function ConfirmMedicine() {
               .map((p) => (
                 <Button
                   key={p.id}
-                  title={[p.name, p.strength, p.dosage_form].filter(Boolean).join(' · ')}
+                  title={[p.name, p.strength, p.dosage_form, p.pack_size]
+                    .filter(Boolean)
+                    .join(' · ')}
                   variant="secondary"
                   onPress={() =>
                     pick({
@@ -228,6 +230,7 @@ export default function ConfirmMedicine() {
                       name: p.name,
                       strength: p.strength || null,
                       dosageForm: p.dosage_form || null,
+                      packSize: p.pack_size || null,
                       score: 1,
                       reason: 'Selected by user',
                     })

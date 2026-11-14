@@ -307,8 +307,47 @@ test('version two migration preserves an existing medicine, stock and legacy sca
     );
     assert.equal(
       (await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version'))!.user_version,
-      3,
+      4,
     );
+  } finally {
+    native.close();
+  }
+});
+
+test('a user-confirmed new barcode is associated with the chosen local product for future offline scans', async () => {
+  const { db, native } = await database();
+  try {
+    const productId = await saveProduct(db, fixture());
+    const id = await beginIdentification(db, 'NEW-PRIVATE-CODE', 'code128', 'new-code-a');
+    const s = await acceptIdentity(db, id, { productId });
+    await saveIdentification(db, id, s.reviewed!, options);
+    assert.ok((await getProduct(db, productId))!.barcodes.includes('NEW-PRIVATE-CODE'));
+    assert.equal(
+      (await db.getFirstAsync<{ source_scan_id: number }>(
+        "SELECT source_scan_id FROM barcodes WHERE identifier='NEW-PRIVATE-CODE'",
+      ))!.source_scan_id,
+      id,
+    );
+    const next = await beginIdentification(db, 'NEW-PRIVATE-CODE', 'code128', 'new-code-b');
+    assert.equal((await getSession(db, next))!.original.predictedProductId, productId);
+  } finally {
+    native.close();
+  }
+});
+test('changing a barcode reruns ownership validation and never reassigns another product code', async () => {
+  const { db, native } = await database();
+  try {
+    const one = await saveProduct(db, fixture('First', 'FIRST-CODE'));
+    const two = await saveProduct(db, fixture('Second', 'SECOND-CODE'));
+    const id = await beginIdentification(db, 'FIRST-CODE', 'code128', 'change-code');
+    const s = await acceptIdentity(db, id, { productId: one });
+    const edited = editField(s.reviewed!, 'gtin', 'SECOND-CODE');
+    const stored = await persistReview(db, id, edited);
+    assert.equal(stored.identityConflict, true);
+    await assert.rejects(saveIdentification(db, id, stored, options), /conflict/);
+    await saveIdentification(db, id, stored, { ...options, conflictChecked: true });
+    assert.ok(!(await getProduct(db, one))!.barcodes.includes('SECOND-CODE'));
+    assert.deepEqual((await getProduct(db, two))!.barcodes, ['SECOND-CODE']);
   } finally {
     native.close();
   }

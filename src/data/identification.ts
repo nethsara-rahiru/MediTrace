@@ -229,11 +229,16 @@ export async function persistReview(db: SQLiteDatabase, id: number, reviewed: Ex
     )
   )
     throw new Error('Use Change medicine identity to correct its name or strength.');
+  const owner = reviewed.fields.gtin.value
+    ? await findProduct(db, reviewed.fields.gtin.value)
+    : null;
+  if (owner && owner.id !== session.identity.productId) reviewed.identityConflict = true;
   await db.runAsync(
     'UPDATE scan_history SET reviewed_data=? WHERE id=?',
     JSON.stringify(reviewed),
     id,
   );
+  return reviewed;
 }
 export type SaveReviewOptions = {
   packageChecked: boolean;
@@ -261,6 +266,13 @@ export async function saveIdentification(
   parseExtraction(JSON.stringify(reviewed));
   if (reviewed.raw !== session.raw || reviewed.format !== session.format)
     throw new Error('Original scan content cannot be changed.');
+  const currentOwner = reviewed.fields.gtin.value
+    ? await findProduct(db, reviewed.fields.gtin.value)
+    : null;
+  if (currentOwner && currentOwner.id !== session.identity.productId && !options.conflictChecked)
+    throw new Error(
+      'The barcode belongs to another local product. Acknowledge the conflict or correct the identifier.',
+    );
   const errors = validateReview(
     reviewed,
     session.identity,
@@ -309,26 +321,62 @@ export async function saveIdentification(
       };
       productId = await saveProduct(db, input, undefined, 'existing');
     }
+    const barcode = final.fields.gtin.value;
+    if (barcode) {
+      const owner = await findProduct(db, barcode);
+      if (!owner)
+        await db.runAsync(
+          'INSERT INTO barcodes(identifier,product_id,source_scan_id) VALUES (?,?,?)',
+          barcode,
+          productId,
+          id,
+        );
+      if (owner?.id === productId || !owner)
+        await db.runAsync(
+          'UPDATE barcodes SET source_scan_id=COALESCE(source_scan_id,?) WHERE identifier=? AND product_id=?',
+          id,
+          barcode,
+          productId,
+        );
+    }
     const serial = final.fields.serialNumber.value ?? '',
       batch = final.fields.batchNumber.value ?? '',
       expiry = final.fields.expiryDate.value;
     const parsedExpiry = parseExpiry(expiry ?? '');
     const bySerial = serial
-      ? await db.getFirstAsync<{ id: number; batch: string; expiry: string | null }>(
-          'SELECT id,batch,expiry FROM user_medicines WHERE product_id=? AND serial_number=?',
+      ? await db.getFirstAsync<{
+          id: number;
+          batch: string;
+          expiry: string | null;
+          manufacturing_date: string | null;
+        }>(
+          'SELECT id,batch,expiry,manufacturing_date FROM user_medicines WHERE product_id=? AND serial_number=?',
           productId,
           serial,
         )
       : null;
     if (bySerial) {
       if (
-        (batch && bySerial.batch && batch !== bySerial.batch) ||
-        (parsedExpiry.expiry && bySerial.expiry && parsedExpiry.expiry !== bySerial.expiry)
+        (bySerial.batch && batch !== bySerial.batch) ||
+        (bySerial.expiry && parsedExpiry.expiry !== bySerial.expiry) ||
+        (bySerial.manufacturing_date &&
+          bySerial.manufacturing_date !== final.fields.manufacturingDate.value)
       )
         throw new Error(
           'This serial is already recorded with different batch or expiry details. Review the package information.',
         );
       packageId = bySerial.id;
+      await db.runAsync(
+        "UPDATE user_medicines SET batch=CASE WHEN batch='' THEN ? ELSE batch END,expiry_precision=CASE WHEN expiry IS NULL AND ? IS NOT NULL THEN ? ELSE expiry_precision END,expiry_source=CASE WHEN expiry IS NULL AND ? IS NOT NULL THEN 'User-confirmed packaging scan' ELSE expiry_source END,expiry=COALESCE(expiry,?),manufacturing_date=COALESCE(manufacturing_date,?),verification_data=? WHERE id=?",
+        batch,
+        parsedExpiry.expiry,
+        parsedExpiry.precision,
+        parsedExpiry.expiry,
+        parsedExpiry.expiry,
+        final.fields.manufacturingDate.value,
+        JSON.stringify(final.fields),
+        packageId,
+      );
     } else if (typeof options.duplicateChoice === 'number') {
       const existing = await db.getFirstAsync<{
         id: number;

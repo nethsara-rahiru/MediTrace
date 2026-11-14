@@ -1,6 +1,7 @@
 import { validGTIN } from './identifiers';
 import { gs1Expiry } from './expiry';
 export type GS1Result = {
+  rawFields?: Record<string, string>;
   gtin?: string;
   batch?: string;
   manufacturing?: string;
@@ -66,6 +67,7 @@ export function parseGS1(raw: string): GS1Result {
       }
     }
   }
+  out.rawFields = { ...fields };
   for (const [ai, text] of Object.entries(fields)) {
     if (
       (fixed[ai] && text.length !== fixed[ai]) ||

@@ -2,7 +2,7 @@ import type { Product } from '../types';
 import { validGTIN } from '../identifiers';
 import { catalogFields, assign, tokenValue } from './engine';
 import { chronologyError, readDate } from './dates';
-import { normalizeName } from './text';
+import { normalizeName, normalizeForm } from './text';
 import {
   emptyFields,
   evidence,
@@ -139,6 +139,8 @@ export function matchesIdentity(product: Product, identity: Identity): boolean {
   return (
     normalizeName(product.name) === normalizeName(identity.name) &&
     product.strength.toLowerCase().replace(/\s/g, '') ===
-      (identity.strength ?? '').toLowerCase().replace(/\s/g, '')
+      (identity.strength ?? '').toLowerCase().replace(/\s/g, '') &&
+    (!identity.dosageForm ||
+      normalizeForm(product.dosage_form) === normalizeForm(identity.dosageForm))
   );
 }

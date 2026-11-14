@@ -316,3 +316,90 @@ test('optional AI is opt-in, schema checked and bounded on failures', async () =
     }),
   );
 });
+
+test('duplicate JSON keys and conflicting labelled identities require human resolution', () => {
+  const repeated = extractMedicine('{"product":"Alphamed","product":"Betamed"}', 'qr', {
+    products: [],
+  });
+  assert.equal(repeated.kind, 'unsupported');
+  assert.equal(repeated.fields.productName.value, null);
+  const conflicting = extractMedicine('Product: Alphamed\nBrand: Betamed', 'qr', { products: [] });
+  assert.equal(conflicting.identityConflict, true);
+  const unknown = extractMedicine('Product: Alphamed\nIngredients: Example ingredient', 'qr', {
+    products: [],
+  });
+  assert.equal(unknown.fields.activeIngredients.value?.[0].strength, null);
+});
+test('an ingredient match cannot replace an explicitly labelled brand identity', () => {
+  const r = extractMedicine(
+    'Product: Unregisteredmed 500mg\nIngredients: Example ingredient 500mg',
+    'qr',
+    { products: [product(1, 'Example ingredient')] },
+  );
+  assert.equal(r.fields.productName.value, 'Unregisteredmed');
+  assert.equal(r.predictedProductId, null);
+});
+test('dosage form disambiguates otherwise identical local strengths', () => {
+  const r = extractMedicine('Product: Alphamed 500mg\nForm: Capsules', 'qr', {
+    products: [product(1), { ...product(2), dosage_form: 'Capsule' }],
+  });
+  assert.equal(r.predictedProductId, 2);
+});
+test('contradictory candidate mappings quarantine a previously confirmed local format', () => {
+  const raw = 'TradeText: Alphamed 500mg\nDateStamp: 01/2028',
+    signature = extractMedicine(raw, 'qr', { products: [] }).signature!;
+  const templates = [
+    {
+      id: 1,
+      signature,
+      rules: [{ field: 'productName' as const, locator: 'label:tradetext' }],
+      verification: 'locally_confirmed' as const,
+      confirmations: 2,
+    },
+    {
+      id: 2,
+      signature,
+      rules: [{ field: 'productName' as const, locator: 'label:datestamp' }],
+      verification: 'candidate' as const,
+      confirmations: 1,
+    },
+  ];
+  const r = extractMedicine(raw, 'qr', { products: [], templates });
+  assert.equal(r.templateId, null);
+  assert.equal(r.fields.productName.value, null);
+  assert.ok(r.issues.some((x) => x.includes('Conflicting local format')));
+});
+
+test('unrelated JSON metadata is retained without inventing medicine fields from arrays or booleans', () => {
+  const r = extractMedicine(
+    '{"product":"Alphamed","metadata":{"online":true},"ingredients":[{"name":"Example ingredient"}]}',
+    'qr',
+    { products: [] },
+  );
+  assert.equal(r.fields.productName.value, 'Alphamed');
+  assert.equal(r.fields.activeIngredients.value?.[0].strength, null);
+  assert.ok(
+    r.additionalInformation.some((x) => x.label === 'metadata.online' && x.value === 'true'),
+  );
+  const invalid = extractMedicine('{"product":["Alphamed","Betamed"],"manufacturer":true}', 'qr', {
+    products: [],
+  });
+  assert.equal(invalid.fields.productName.value, null);
+  assert.equal(invalid.fields.manufacturer.value, null);
+});
+
+test('keyword labels without punctuation and a unique unlabelled GTIN are supported', () => {
+  const labelled = extractMedicine(
+    'Product Name Alphamed 500mg\nBatch No AB123\nExpiry Date 01/2028',
+    'qr',
+    { products: [] },
+  );
+  assert.equal(labelled.fields.productName.value, 'Alphamed');
+  assert.equal(labelled.fields.batchNumber.value, 'AB123');
+  assert.equal(labelled.fields.expiryDate.value, '2028-01');
+  const unlabelled = extractMedicine('Alphamed 500mg\n4006381333931\n01/2028', 'qr', {
+    products: [],
+  });
+  assert.equal(unlabelled.fields.gtin.value, '04006381333931');
+  assert.equal(unlabelled.fields.expiryDate.value, null);
+});

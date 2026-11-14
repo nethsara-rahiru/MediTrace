@@ -7,6 +7,9 @@ export function normalizeName(value: string) {
     .trim()
     .replace(/\s+/g, ' ');
 }
+export function normalizeForm(value: string) {
+  return normalizeName(value).replace(/\b(tablet|capsule|drop)s\b/g, '$1');
+}
 export function strengthOf(value: string): string | null {
   return (
     value

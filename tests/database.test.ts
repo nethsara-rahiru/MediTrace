@@ -32,7 +32,7 @@ test('migration is idempotent and enables referential integrity', async () => {
     await migrate(db);
     assert.equal(
       (await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version'))?.user_version,
-      3,
+      4,
     );
     assert.throws(() => native.exec("INSERT INTO barcodes VALUES ('ORPHAN',999)"));
   } finally {

@@ -12,6 +12,7 @@ import {
   nameOf,
   nameSimilarity,
   normalizeName,
+  normalizeForm,
   strengthOf,
 } from './text';
 import {
@@ -67,8 +68,10 @@ export function applyToken(
     return;
   }
   if (result.fields[key].value !== null) {
-    if (JSON.stringify(result.fields[key].value) !== JSON.stringify(value))
+    if (JSON.stringify(result.fields[key].value) !== JSON.stringify(value)) {
       result.issues.push(`Conflicting values were found for ${key}. Confirm the intended value.`);
+      if (['productName', 'strength', 'dosageForm'].includes(key)) result.identityConflict = true;
+    }
     return;
   }
   assign(result, key, evidence(value, token.raw, method, token.locator, confidence));
@@ -86,7 +89,9 @@ export function catalogFields(product: Product): Partial<Fields> {
     productName: product.name,
     strength: product.strength,
     dosageForm: product.dosage_form,
-    activeIngredients: product.ingredients.length ? product.ingredients : undefined,
+    activeIngredients: product.ingredients.length
+      ? product.ingredients.map((i) => ({ ...i, strength: i.strength || null }))
+      : undefined,
     manufacturer: product.manufacturer,
     manufacturerAddress: product.manufacturer_address,
   };
@@ -117,7 +122,7 @@ function candidatesFor(result: Extraction, products: Product[]): Candidate[] {
       const labelledField = labelField(token.label);
       if (labelledField && labelledField !== 'productName') continue;
       const name = nameOf(token.raw);
-      if (!name || token.kind === 'date' || token.kind === 'company' || token.kind === 'address')
+      if (!name || ['date', 'company', 'address', 'array', 'boolean'].includes(token.kind))
         continue;
       const score = nameSimilarity(name, product.name);
       if (score > best) {
@@ -138,6 +143,12 @@ function candidatesFor(result: Extraction, products: Product[]): Candidate[] {
     }
     if (!exactCode && best < 0.6) continue;
     if (
+      result.fields.dosageForm.value &&
+      product.dosage_form &&
+      normalizeForm(result.fields.dosageForm.value) !== normalizeForm(product.dosage_form)
+    )
+      best = Math.max(0, best - 0.3);
+    if (
       givenStrength &&
       product.strength &&
       givenStrength.toLowerCase().replace(/\s/g, '') !==
@@ -150,6 +161,7 @@ function candidatesFor(result: Extraction, products: Product[]): Candidate[] {
       name: product.name,
       strength: product.strength || null,
       dosageForm: product.dosage_form || null,
+      packSize: product.pack_size || null,
       score: exactCode ? 1 : best,
       reason: exactCode ? 'Exact local identifier' : reason,
     });
@@ -209,8 +221,26 @@ export function extractMedicine(
       manufacturingDate:
         gs1.manufacturingPrecision === 'month' ? gs1.manufacturing?.slice(0, 7) : gs1.manufacturing,
     };
+    const aiKeys: Partial<Record<FieldKey, string>> = {
+      gtin: '01',
+      batchNumber: '10',
+      serialNumber: '21',
+      manufacturingDate: '11',
+      expiryDate: '17',
+    };
     for (const [key, value] of Object.entries(values))
-      if (value) assign(result, key as FieldKey, evidence(value, raw, 'gs1', null, 'high'));
+      if (value)
+        assign(
+          result,
+          key as FieldKey,
+          evidence(
+            value,
+            gs1.rawFields?.[aiKeys[key as FieldKey] ?? ''] ?? raw,
+            'gs1',
+            null,
+            'high',
+          ),
+        );
   }
   // Standard fields have priority over manufacturer-specific labels.
   const handled = new Set<string>();
@@ -218,19 +248,29 @@ export function extractMedicine(
     for (const token of result.tokens) {
       if (token.locator.startsWith('unmapped:') || token.locator.startsWith('pattern:')) continue;
       const field = labelField(token.label);
-      if (field) {
+      if (
+        field &&
+        token.kind !== 'boolean' &&
+        (token.kind !== 'array' || field === 'activeIngredients')
+      ) {
         applyToken(result, field, token, 'labelled', 'high');
         handled.add(token.locator);
       }
     }
-  const templates = (context.templates ?? []).filter(
-    (t) =>
-      t.verification === 'locally_confirmed' &&
-      t.confirmations >= 2 &&
-      t.signature === result.signature,
+  const matchingTemplates = (context.templates ?? []).filter(
+    (t) => t.signature === result.signature,
   );
-  const distinctRules = new Set(templates.map((t) => JSON.stringify(t.rules)));
-  if (distinctRules.size > 1)
+  const templates = matchingTemplates
+    .filter((t) => t.verification === 'locally_confirmed' && t.confirmations >= 2)
+    .sort((a, b) => b.rules.length - a.rules.length || b.confirmations - a.confirmations);
+  const mappings = new Map<FieldKey, Set<string>>();
+  for (const template of matchingTemplates)
+    for (const rule of template.rules) {
+      if (!mappings.has(rule.field)) mappings.set(rule.field, new Set());
+      mappings.get(rule.field)!.add(rule.locator);
+    }
+  const conflictingMappings = [...mappings.values()].some((values) => values.size > 1);
+  if (conflictingMappings)
     result.issues.push('Conflicting local format templates were ignored. Confirm fields manually.');
   else if (templates.length) {
     const template = templates[0];
@@ -259,6 +299,23 @@ export function extractMedicine(
       ? []
       : result.tokens
   ).filter((t) => t.locator.startsWith('pattern:') || t.locator.startsWith('unmapped:'));
+  const gtinTokens = unlabelled.filter((t) => /^\d+$/.test(t.raw) && validGTIN(t.raw));
+  if (result.fields.gtin.value === null && gtinTokens.length === 1)
+    assign(
+      result,
+      'gtin',
+      evidence(
+        normalizeIdentifier(gtinTokens[0].raw),
+        gtinTokens[0].raw,
+        'pattern',
+        gtinTokens[0].locator,
+        'low',
+      ),
+    );
+  else if (result.fields.gtin.value === null && gtinTokens.length > 1)
+    result.issues.push(
+      'Multiple possible product identifiers were found. Select the correct barcode instead of guessing.',
+    );
   const ingredientNames = [
     ...new Set(context.products.flatMap((p) => p.ingredients.map((i) => normalizeName(i.name)))),
   ];
@@ -381,6 +438,7 @@ export function extractMedicine(
         name: previousProduct.name,
         strength: previousProduct.strength || null,
         dosageForm: previousProduct.dosage_form || null,
+        packSize: previousProduct.pack_size || null,
         score: 1,
         reason: 'Previously reviewed exact payload',
       },

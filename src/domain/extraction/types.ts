@@ -63,6 +63,7 @@ export type Candidate = {
   name: string;
   strength: string | null;
   dosageForm: string | null;
+  packSize?: string | null;
   score: number;
   reason: string;
 };
