@@ -62,11 +62,25 @@ test('identity gate, corrections, package verification, persistence and repeated
   await page.getByRole('checkbox', { name: packageCheck, exact: true }).click();
   await page.getByRole('button', { name: 'Save checked package locally', exact: true }).click();
   await expect(page.getByText('Saved medicine identification', { exact: true })).toBeVisible();
+  const savedReviewUrl = page.url();
   await context.setOffline(false);
   await page.getByRole('button', { name: 'View saved medicine', exact: true }).click();
   await expect(page.getByRole('textbox', { name: 'Quantity *', exact: true })).toHaveValue('2');
   await expect(page.getByRole('textbox', { name: 'Serial number', exact: true })).toHaveValue(
     'SERIAL-ONE',
+  );
+  await page.getByRole('button', { name: 'Remove from my medicines', exact: true }).click();
+  await page.getByRole('button', { name: 'Confirm removal', exact: true }).click();
+  await expect(page.getByText('Your medicine cabinet starts here', { exact: true })).toBeVisible();
+  await page.goto(savedReviewUrl);
+  await expect(
+    page.getByText(
+      'The inventory entry was removed. This scan and its verification evidence are still available in history.',
+      { exact: true },
+    ),
+  ).toBeVisible();
+  await expect(page.getByRole('button', { name: 'View saved medicine', exact: true })).toHaveCount(
+    0,
   );
   expect(errors).toEqual([]);
 });

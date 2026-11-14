@@ -15,7 +15,7 @@ import {
 import { editField } from '../src/domain/extraction/verification';
 import { extractMedicine } from '../src/domain/extraction/engine';
 import { listTemplates } from '../src/data/templates';
-import { listInventory } from '../src/data/inventory';
+import { listInventory, removeInventory } from '../src/data/inventory';
 import { getProduct, listProducts, saveProduct } from '../src/data/products';
 import { expiryState } from '../src/domain/expiry';
 import { schema } from '../src/data/schema';
@@ -362,6 +362,25 @@ test('changing strength clears the rejected formulation even when its brand name
     assert.equal(s.reviewed!.fields.activeIngredients.value, null);
     assert.equal(s.reviewed!.fields.manufacturer.value, null);
     assert.equal(s.original.fields.activeIngredients.value?.[0].strength, '500mg');
+  } finally {
+    native.close();
+  }
+});
+
+test('removing inventory preserves scan evidence and prevents accidental recreation from a saved session', async () => {
+  const { db, native } = await database();
+  try {
+    const id = await beginIdentification(db, raw, 'qr', 'removed-pack');
+    const session = await acceptIdentity(db, id, { name: 'Alphamed', strength: '500mg' });
+    const pack = await saveIdentification(db, id, session.reviewed!, options);
+    await removeInventory(db, pack);
+    const saved = (await getSession(db, id))!;
+    assert.equal(saved.state, 'saved');
+    assert.equal(saved.packageId, null);
+    assert.equal(saved.original.raw, raw);
+    await assert.rejects(saveIdentification(db, id, saved.reviewed!, options), /removed/);
+    assert.equal((await listInventory(db)).length, 0);
+    assert.equal((await listProducts(db)).length, 1);
   } finally {
     native.close();
   }

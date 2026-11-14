@@ -452,15 +452,19 @@ export default function ReviewMedicine() {
         </>
       ) : (
         <>
-          <Button
-            title="View saved medicine"
-            onPress={() =>
-              router.push({
-                pathname: '/inventory-entry',
-                params: { id: session.packageId ?? '', productId: identity.productId ?? '' },
-              })
-            }
-          />
+          {session.packageId ? (
+            <Button
+              title="View saved medicine"
+              onPress={() =>
+                router.push({ pathname: '/inventory-entry', params: { id: session.packageId! } })
+              }
+            />
+          ) : (
+            <Notice>
+              The inventory entry was removed. This scan and its verification evidence are still
+              available in history.
+            </Notice>
+          )}
           <Button
             title="Scan another package"
             variant="secondary"
