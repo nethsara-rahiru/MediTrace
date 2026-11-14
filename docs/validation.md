@@ -1,5 +1,13 @@
 # Validation record
 
+## Single-name confirmation — 14 November 2026
+
+- TypeScript, formatting and Android JavaScript/Hermes export: passed.
+- Automated tests: **67 passed**.
+- Browser flows: **7 verified**, including hiding alternatives before rejection
+  and confirming a replacement name before displaying details.
+- No SQL migration, dependency or native-module change.
+
 ## Name-detection update — 14 November 2026
 
 - TypeScript and formatting: passed.

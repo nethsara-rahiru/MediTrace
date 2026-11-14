@@ -45,3 +45,31 @@ invented from an unlabelled address, company description or standalone amount.
   the existing identity, verification, inventory, persistence and offline flows.
 - TypeScript and formatting checks pass.
 - Android JavaScript/Hermes bundle export passes; no new native module is introduced.
+
+## One suggestion before alternatives
+
+After a scan, the confirmation screen presents only the best proposed identity.
+It asks: **“Is this the largest medicine name printed on the box?”** The user
+compares the physical packaging, spelling and strength. QR/barcode data does not
+measure printed text size.
+
+- **Yes, correct medicine:** confirm the shown identity and continue to field review.
+- **No, incorrect medicine:** reveal the other ranked suggestions, local search
+  and manual correction. Rejected text aliases are excluded from the alternatives.
+- Selecting an alternative returns to a single focused confirmation card.
+- **Scan again:** return to the scanner.
+- If no identity can be proposed, manual entry/search remain immediately available.
+
+A source-consistent detected name takes priority over incompatible suggestions.
+When local variants share a name, a compatible top variant is shown with its
+strength/form and pack size where available. The full list is deferred until
+rejection. Equally ranked names can have a first proposal without the extraction
+engine pretending their ambiguity is resolved. No product association or trusted
+status is assigned merely by presenting the suggestion; actual confirmation and
+package review remain separate.
+
+The presentation helper is covered by five additional unit tests and a browser
+flow verifying that alternatives are hidden initially, appear after rejection,
+and disappear again when the replacement identity is selected. Current checks:
+67 automated tests and seven verified browser flows; Android bundle export,
+TypeScript and formatting pass. No schema or dependency change is needed.
