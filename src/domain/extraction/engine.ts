@@ -299,7 +299,12 @@ export function extractMedicine(
       ? []
       : result.tokens
   ).filter((t) => t.locator.startsWith('pattern:') || t.locator.startsWith('unmapped:'));
-  const gtinTokens = unlabelled.filter((t) => /^\d+$/.test(t.raw) && validGTIN(t.raw));
+  const gtinTokens = unlabelled.filter(
+    (t) =>
+      /^\d+$/.test(t.raw) &&
+      validGTIN(t.raw) &&
+      !fieldKeys.some((k) => result.fields[k].locator === t.locator),
+  );
   if (result.fields.gtin.value === null && gtinTokens.length === 1)
     assign(
       result,
@@ -356,7 +361,11 @@ export function extractMedicine(
     ['code', 'batchNumber'],
   ] as const) {
     const tokens = unlabelled.filter((t) => t.kind === kind);
-    if (tokens.length === 1 && result.fields[field].value === null) {
+    if (
+      tokens.length === 1 &&
+      result.fields[field].value === null &&
+      !fieldKeys.some((k) => k !== field && result.fields[k].locator === tokens[0].locator)
+    ) {
       applyToken(result, field, tokens[0], 'pattern', 'low');
       if (kind === 'code')
         result.issues.push(
@@ -364,9 +373,17 @@ export function extractMedicine(
         );
     }
   }
-  if (unlabelled.some((t) => t.kind === 'date'))
+  if (
+    unlabelled.some(
+      (t) =>
+        t.kind === 'date' &&
+        !['manufacturingDate', 'expiryDate'].some(
+          (k) => result.fields[k as 'expiryDate'].locator === t.locator,
+        ),
+    )
+  )
     result.issues.push(
-      'Unlabelled dates were not assigned to manufacturing or expiry. Set their meanings after checking the package.',
+      'Unlabelled dates without confirmed mappings were not assigned to manufacturing or expiry. Set their meanings after checking the package.',
     );
   result.candidates = candidatesFor(result, context.products);
   const best = result.candidates[0],

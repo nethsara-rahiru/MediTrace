@@ -367,3 +367,28 @@ test('combination strengths retain all printed amounts without computing or drop
     { name: 'Ingredient B', strength: '65mg' },
   ]);
 });
+
+test('learned code and date roles take priority over unlabelled heuristics', () => {
+  const raw = 'Product: Alphamed\nZX1234\n01/2028';
+  const signature = extractMedicine(raw, 'qr', { products: [] }).signature!;
+  const r = extractMedicine(raw, 'qr', {
+    products: [],
+    templates: [
+      {
+        id: 1,
+        signature,
+        verification: 'locally_confirmed',
+        confirmations: 2,
+        rules: [
+          { field: 'productName', locator: 'label:product' },
+          { field: 'serialNumber', locator: 'pattern:code' },
+          { field: 'expiryDate', locator: 'pattern:date' },
+        ],
+      },
+    ],
+  });
+  assert.equal(r.fields.serialNumber.value, 'ZX1234');
+  assert.equal(r.fields.batchNumber.value, null);
+  assert.equal(r.fields.expiryDate.value, '2028-01');
+  assert.ok(!r.issues.some((x) => x.startsWith('Unlabelled dates')));
+});
