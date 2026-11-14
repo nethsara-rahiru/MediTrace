@@ -152,3 +152,21 @@ test('missing-name sessions cannot bypass confirmation and support explicit fiel
     'Example Company',
   );
 });
+
+test('unlabelled strength, address and code clues choose a name without exposing details early', async ({
+  page,
+}) => {
+  const address = 'No. 22, Eastern Gardens, Central District, 20400';
+  await scan(page, `AB12 CD34 EF56\n${address}\nExamplemed500mg`);
+  await expect(page.getByText('Examplemed 500mg', { exact: true })).toBeVisible();
+  await expect(
+    page.getByRole('textbox', { name: 'Manufacturer address', exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole('button', { name: 'Yes, correct medicine', exact: true }).click();
+  await expect(
+    page.getByRole('textbox', { name: 'Manufacturer address', exact: true }),
+  ).toHaveValue(address);
+  await expect(page.getByRole('textbox', { name: 'Batch / lot number', exact: true })).toHaveValue(
+    'AB12 CD34 EF56',
+  );
+});

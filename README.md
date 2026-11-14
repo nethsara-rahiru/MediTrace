@@ -53,6 +53,8 @@ Browser preview does not establish native camera compatibility.
 See [the feature guide](docs/intelligent-identification.md) for extraction logic,
 SQLite migrations, confirmation rules, local format learning and limitations.
 [Delivery and file manifest](docs/identification-delivery.md) includes test evidence.
+[Name-detection rules](docs/name-detection.md) explain the newer numeric, strength
+and address clues and their exceptions.
 Existing installations migrate automatically to schema version 4; do not clear
 app data to upgrade. No new package, backend or API key is required.
 

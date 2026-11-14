@@ -1,5 +1,13 @@
 # Validation record
 
+## Name-detection update — 14 November 2026
+
+- TypeScript and formatting: passed.
+- Automated tests: **62 passed**.
+- Browser flows: **6 passed**, including mixed unlabelled name/address/code content.
+- Android JavaScript/Hermes bundle export: passed.
+- No dependency or schema changes. See [name-detection rules](name-detection.md).
+
 ## Intelligent identification — 14 November 2026
 
 - TypeScript and formatting: passed.
