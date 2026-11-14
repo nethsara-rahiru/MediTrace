@@ -12,7 +12,7 @@ export function normalizeForm(value: string) {
 }
 export function strengthOf(value: string): string | null {
   const pattern =
-    /\b\d+(?:\.\d+)?\s*(?:mcg|μg|ug|mg|kg|g|ml|iu|units?|%)(?:\s*\/\s*(?:\d+(?:\.\d+)?\s*)?(?:ml|g|tablet|capsule))?(?![a-z])/gi;
+    /\d+(?:\.\d+)?\s*(?:mcg|μg|ug|mg|kg|g|ml|iu|units?|%)(?:\s*\/\s*(?:\d+(?:\.\d+)?\s*)?(?:ml|g|tablet|capsule))?(?![a-z])/gi;
   const matches = [...value.matchAll(pattern)];
   if (!matches.length) return null;
   const first = matches[0];
@@ -137,17 +137,70 @@ export function labelField(label: string): FieldKey | null {
     if (names.includes(full) || names.includes(last)) return field as FieldKey;
   return null;
 }
+export type NameClues = {
+  kind: 'name' | 'address' | 'code' | 'strength' | 'numeric_name' | 'description';
+  name: string | null;
+  strength: string | null;
+  rank: number;
+};
+// These are structural clues, not a medical vocabulary or accuracy probabilities.
+// Explicit labels and exact catalog matches must not be rejected by these hints.
+export function nameClues(raw: string): NameClues {
+  const value = raw.trim(),
+    name = nameOf(value),
+    strength = strengthOf(value);
+  const words = value.split(/\s+/).filter(Boolean);
+  const parts = value
+    .split(',')
+    .map((part) => part.trim())
+    .filter(Boolean);
+  const addressWords =
+    /\b(?:sri lanka|colombo|road|street|avenue|lane|boulevard|industrial estate|postal|post code|postcode|p\.?o\.? box)\b/i;
+  const commaAddress =
+    (parts.length >= 3 && value.length >= 40 && words.length >= 5) ||
+    (parts.length >= 2 && value.length >= 75 && words.length >= 9);
+  if (addressWords.test(value) || commaAddress) return { kind: 'address', name, strength, rank: 0 };
+  if (!name && strength) return { kind: 'strength', name: null, strength, rank: 0 };
+  const residual = name ?? value;
+  const digits = residual.match(/\p{N}/gu) ?? [];
+  const groups = residual.match(/\p{N}+/gu) ?? [];
+  const letters = residual.match(/\p{L}/gu) ?? [];
+  const ratio = digits.length / Math.max(1, digits.length + letters.length);
+  const transitions = residual.match(/\p{L}\p{N}|\p{N}\p{L}/gu) ?? [];
+  if (
+    !letters.length ||
+    /\p{N}{6,}/u.test(residual) ||
+    (digits.length >= 5 && groups.length >= 3) ||
+    (digits.length >= 4 && ratio >= 0.35) ||
+    (digits.length >= 4 && transitions.length >= 3) ||
+    /^(?:batch|lot|serial|sn)[ _./-]*\d+$/i.test(residual)
+  )
+    return { kind: 'code', name, strength, rank: 0 };
+  if (value.length > 100 || words.length > 10)
+    return { kind: 'description', name, strength, rank: 0 };
+  if (digits.length) return { kind: 'numeric_name', name, strength, rank: 0.25 };
+  if (!name || letters.length < 2) return { kind: 'description', name, strength, rank: 0 };
+  return {
+    kind: 'name',
+    name,
+    strength,
+    rank:
+      0.65 +
+      (strength?.length ? 0.2 : 0) -
+      (parts.length > 1 ? 0.1 : 0) -
+      (value.length > 70 ? 0.15 : 0),
+  };
+}
 export function tokenKind(raw: string): string {
   if (/^\d{4}-\d{2}(?:-\d{2})?$|^\d{1,2}[/-]\d{4}$|^\d{1,2}[/.]\d{1,2}[/.]\d{4}$/.test(raw))
     return 'date';
   if (/^\d{8,14}$/.test(raw)) return 'digits';
+  const clues = nameClues(raw);
+  if (clues.kind === 'address') return 'address';
   if (/\b(?:pharma(?:ceuticals)?|laborator(?:y|ies)|ltd|limited|pvt|plc|inc)\b/i.test(raw))
     return 'company';
-  if (/\b(?:sri lanka|colombo|road|street|avenue|industrial estate|postal)\b/i.test(raw))
-    return 'address';
-  if (strengthOf(raw)) return 'strength_text';
-  if (/^(?=.*[a-z])(?=.*\d)[a-z0-9._/-]{3,40}$/i.test(raw)) return 'code';
-  return 'text';
+  if (clues.kind !== 'name') return clues.kind;
+  return clues.strength ? 'strength_text' : 'text';
 }
 export function nameSimilarity(a: string, b: string): number {
   a = normalizeName(a).slice(0, 128);

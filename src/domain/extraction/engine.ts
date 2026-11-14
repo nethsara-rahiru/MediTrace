@@ -10,6 +10,7 @@ import {
   ingredientsOf,
   labelField,
   nameOf,
+  nameClues,
   nameSimilarity,
   normalizeName,
   normalizeForm,
@@ -18,6 +19,7 @@ import {
 import {
   emptyFields,
   packageKeys,
+  productKeys,
   missing,
   evidence,
   fieldKeys,
@@ -118,11 +120,33 @@ function candidatesFor(result: Extraction, products: Product[]): Candidate[] {
     const exactCode = Boolean(identifier && product.barcodes.includes(identifier));
     let best = givenName ? nameSimilarity(givenName, product.name) : 0,
       reason = best === 1 ? 'Matching local name' : 'Similar local name';
-    for (const token of givenName ? [] : result.tokens) {
+    if (
+      givenName &&
+      normalizeName(givenName) !== normalizeName(product.name) &&
+      nameClues(givenName).kind !== 'name'
+    )
+      best = 0;
+    for (const token of givenName && result.fields.productName.method !== 'pattern'
+      ? []
+      : result.tokens) {
       const labelledField = labelField(token.label);
       if (labelledField && labelledField !== 'productName') continue;
       const name = nameOf(token.raw);
-      if (!name || ['date', 'company', 'address', 'array', 'boolean'].includes(token.kind))
+      if (!name || ['date', 'array', 'boolean'].includes(token.kind)) continue;
+      const exactName = normalizeName(name) === normalizeName(product.name);
+      if (
+        !exactName &&
+        ([
+          'company',
+          'address',
+          'code',
+          'digits',
+          'numeric_name',
+          'description',
+          'strength',
+        ].includes(token.kind) ||
+          nameClues(token.raw).kind !== 'name')
+      )
         continue;
       const score = nameSimilarity(name, product.name);
       if (score > best) {
@@ -195,7 +219,9 @@ export function extractMedicine(
     decoded.identifier &&
     decoded.identifier.length <= 256 &&
     !/[\n\r;|:=]/.test(raw) &&
-    result.tokens.length <= 1;
+    result.tokens.length <= 1 &&
+    (context.products.some((p) => p.barcodes.includes(decoded.identifier!)) ||
+      !['address', 'company', 'description', 'strength'].includes(result.tokens[0]?.kind ?? ''));
   if (simpleIdentifier) {
     result.kind = 'identifier';
     assign(result, 'gtin', evidence(decoded.identifier!, raw, 'pattern', null, 'high'));
@@ -349,12 +375,26 @@ export function extractMedicine(
       nameOf(t.raw) &&
       !/[<>{}]|\b(?:ignore instructions|system prompt|drop table|select .+ from)\b/i.test(t.raw),
   );
-  if (result.fields.productName.value === null && names.length === 1)
+  names.sort((a, b) => nameClues(b.raw).rank - nameClues(a.raw).rank);
+  if (
+    result.fields.productName.value === null &&
+    names.length &&
+    (names.length === 1 || nameClues(names[0].raw).rank - nameClues(names[1].raw).rank >= 0.15)
+  )
     applyToken(result, 'productName', names[0], 'pattern', 'low');
   if (result.fields.productName.value === null && names.length > 1)
     result.issues.push(
       'Several unlabelled lines could be medicine names. Select or enter the correct identity.',
     );
+  const standaloneStrengths = unlabelled.filter(
+    (t) => t.kind === 'strength' && !fieldKeys.some((k) => result.fields[k].locator === t.locator),
+  );
+  if (result.fields.strength.value === null && standaloneStrengths.length === 1) {
+    applyToken(result, 'strength', standaloneStrengths[0], 'pattern', 'low');
+    result.issues.push(
+      'An unlabelled amount may describe strength or pack volume. Check its meaning against the packaging.',
+    );
+  }
   for (const [kind, field] of [
     ['company', 'manufacturer'],
     ['address', 'manufacturerAddress'],
@@ -367,6 +407,10 @@ export function extractMedicine(
       !fieldKeys.some((k) => k !== field && result.fields[k].locator === tokens[0].locator)
     ) {
       applyToken(result, field, tokens[0], 'pattern', 'low');
+      if (kind === 'address')
+        result.issues.push(
+          'An unlabelled address-like line was suggested as the manufacturer address. Confirm its meaning.',
+        );
       if (kind === 'code')
         result.issues.push(
           'An unlabelled code was suggested as a batch number; it could be a serial or another identifier.',
@@ -395,7 +439,10 @@ export function extractMedicine(
     const product = context.products.find((p) => p.id === best.productId)!;
     const labelledName = result.fields.productName;
     const differentName =
-      labelledName.value && nameSimilarity(labelledName.value, product.name) < 0.72;
+      labelledName.value &&
+      (nameSimilarity(labelledName.value, product.name) < 0.72 ||
+        JSON.stringify(labelledName.value.match(/\p{N}+/gu) ?? []) !==
+          JSON.stringify(product.name.match(/\p{N}+/gu) ?? []));
     const differentStrength =
       result.fields.strength.value &&
       product.strength &&
@@ -409,6 +456,16 @@ export function extractMedicine(
       // Do not attach the conflicting payload's product-specific attributes to the identifier's product.
       for (const key of ['activeIngredients', 'manufacturer', 'manufacturerAddress'] as const)
         assign(result, key, missing());
+    }
+    if (!exactCode && differentName && labelledName.method === 'pattern') {
+      for (const key of productKeys) assign(result, key, missing());
+      const identityToken = result.tokens.find(
+        (t) => normalizeName(nameOf(t.raw) ?? '') === normalizeName(product.name),
+      );
+      if (identityToken) applyToken(result, 'productName', identityToken, 'pattern', 'low');
+      result.issues.push(
+        'An exact local name replaced an uncertain text prediction. Attributes from the other name were cleared.',
+      );
     }
     result.predictedProductId = product.id;
     const fromCatalog = catalogFields(product);
@@ -484,7 +541,7 @@ export function extractMedicine(
         });
     }
   }
-  if (!result.fields.productName.value && names.length > 1)
+  if (result.predictedProductId === null && names.length > 1)
     for (const token of names.slice(0, 4))
       result.candidates.push({
         key: `text:${token.locator}`,
@@ -495,6 +552,21 @@ export function extractMedicine(
         score: 0.4,
         reason: 'Unlabelled text suggestion',
       });
+  if (result.predictedProductId === null)
+    for (const token of unlabelled
+      .filter((t) => t.kind === 'numeric_name' && nameOf(t.raw))
+      .slice(0, 4)) {
+      result.candidates.push({
+        key: `numeric:${token.locator}`,
+        productId: null,
+        name: nameOf(token.raw)!,
+        strength: strengthOf(token.raw),
+        dosageForm: formOf(token.raw),
+        score: 0.25,
+        reason:
+          'Numbers remain outside a recognised strength; confirm this possible brand manually',
+      });
+    }
   const chronology = chronologyError(
     result.fields.manufacturingDate.value,
     result.fields.expiryDate.value,
