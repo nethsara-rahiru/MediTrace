@@ -35,7 +35,14 @@ export default function Scanner() {
   function scan(raw: string, type: string) {
     if (locked.current || !raw.trim()) return;
     locked.current = true;
-    router.push({ pathname: '/scan-result', params: { raw, format: type } });
+    router.push({
+      pathname: '/scan-result',
+      params: {
+        raw,
+        format: type,
+        token: `scan-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`,
+      },
+    });
   }
   return (
     <Page>
@@ -115,6 +122,7 @@ export default function Scanner() {
         <Card>
           <Field
             label="Barcode or QR content"
+            maxLength={4096}
             value={value}
             onChangeText={setValue}
             placeholder="Enter the exact identifier or structured content"

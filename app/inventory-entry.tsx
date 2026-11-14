@@ -21,6 +21,8 @@ export default function InventoryEntry() {
   const [quantity, setQuantity] = useState(String(existing?.quantity ?? 1)),
     [unit, setUnit] = useState(existing?.unit ?? 'units'),
     [batch, setBatch] = useState(existing?.batch ?? params.batch ?? '');
+  const [manufactured, setManufactured] = useState(existing?.manufacturing_date ?? ''),
+    [serial, setSerial] = useState(existing?.serial_number ?? '');
   const initialExpiry = existing?.expiry ?? params.expiry ?? '';
   const month = existing?.expiry_precision === 'month' || params.expiryPrecision === 'month';
   const [expiry, setExpiry] = useState(month ? initialExpiry.slice(0, 7) : initialExpiry),
@@ -44,6 +46,8 @@ export default function InventoryEntry() {
             batch,
             expiry,
             expiry_source: 'User-confirmed packaging information',
+            manufacturing_date: manufactured || null,
+            serial_number: serial,
           },
           existing?.id,
         ),
@@ -166,6 +170,20 @@ export default function InventoryEntry() {
                   value={batch}
                   onChangeText={setBatch}
                   placeholder="As printed on this pack"
+                />
+                <Field
+                  label="Manufacturing date"
+                  value={manufactured}
+                  onChangeText={setManufactured}
+                  placeholder="YYYY-MM or YYYY-MM-DD"
+                  hint="Leave blank when unknown."
+                />
+                <Field
+                  label="Serial number"
+                  value={serial}
+                  onChangeText={setSerial}
+                  placeholder="As printed on this pack"
+                  maxLength={512}
                 />
                 <Field
                   label="Expiry date"

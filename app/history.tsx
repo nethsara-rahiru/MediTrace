@@ -28,7 +28,17 @@ export default function History() {
         onChangeText={setQuery}
       />
       <Chips
-        items={['All', 'Catalog match', 'Unknown product', 'Needs review', 'Website QR']}
+        items={[
+          'All',
+          'Awaiting confirmation',
+          'User-confirmed identity',
+          'Saved locally',
+          'Identity rejected',
+          'Catalog match',
+          'Unknown product',
+          'Needs review',
+          'Website QR',
+        ]}
         value={filter}
         onChange={setFilter}
       />
