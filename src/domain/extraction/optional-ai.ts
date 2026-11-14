@@ -1,6 +1,12 @@
 import { assign, tokenValue } from './engine';
 import { copyExtraction } from './verification';
-import { evidence, fieldKeys, type Extraction, type FieldKey } from './types';
+import {
+  evidence,
+  fieldKeys,
+  type Extraction,
+  type FieldKey,
+  type DetectedIngredient,
+} from './types';
 export type AIAdapter = (request: {
   raw: string;
   instruction: string;
@@ -11,10 +17,12 @@ export const extractionInstruction =
 export function validateAIResponse(
   raw: string,
   response: unknown,
-): Partial<Record<FieldKey, { value: unknown; originalValue: string }>> {
+): Partial<Record<FieldKey, { value: string | DetectedIngredient[]; originalValue: string }>> {
   if (!response || typeof response !== 'object' || Array.isArray(response))
     throw new Error('AI returned an invalid object.');
-  const output: Partial<Record<FieldKey, { value: unknown; originalValue: string }>> = {};
+  const output: Partial<
+    Record<FieldKey, { value: string | DetectedIngredient[]; originalValue: string }>
+  > = {};
   for (const [key, field] of Object.entries(response)) {
     if (!fieldKeys.includes(key as FieldKey)) throw new Error('AI returned an unsupported field.');
     if (field === null) continue;
@@ -41,7 +49,14 @@ export async function optionalAIFallback(
   result: Extraction,
   options: { adapter?: AIAdapter; consent?: boolean; timeoutMs?: number } = {},
 ): Promise<Extraction> {
-  if (!options.adapter || !options.consent || result.fields.productName.value) return result;
+  if (
+    !options.adapter ||
+    !options.consent ||
+    result.fields.productName.value ||
+    result.kind === 'unsupported' ||
+    result.raw.length > 4096
+  )
+    return result;
   const copy = copyExtraction(result),
     controller = new AbortController();
   let timer: ReturnType<typeof setTimeout> | undefined;
@@ -66,11 +81,10 @@ export async function optionalAIFallback(
     const validated = validateAIResponse(result.raw, response);
     for (const [key, entry] of Object.entries(validated))
       if (copy.fields[key as FieldKey].value === null)
-        assign(
-          copy,
-          key as FieldKey,
-          evidence(entry.value as string, entry.originalValue, 'ai', null, 'low'),
-        );
+        assign(copy, key as FieldKey, {
+          ...evidence(entry.value, entry.originalValue, 'ai', null, 'low'),
+          source: 'Optional AI adapter; literal evidence checked against the scan',
+        });
     copy.issues.push(
       'AI suggestions are unverified. Check every suggested value against the package.',
     );
