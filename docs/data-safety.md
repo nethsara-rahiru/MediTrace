@@ -40,3 +40,16 @@ application/browser data can remove records; backup/export is outside release on
 
 Notifications require explicit permission and use generic wording. No medicine
 name is included in lock-screen notification text. OS delivery is best effort.
+
+## Scanned identification review
+
+Medicine identity confirmation and package verification are separate. Missing
+fields stay missing; user confirmation never awards independently source-checked
+status. Rejected product attributes are cleared before a replacement is reviewed.
+Original raw content and extraction evidence remain in local history. Ambiguous
+dates and conflicting identifiers require explicit correction/acknowledgement.
+
+Locally learned templates require distinct reviewed payloads and are never global
+trust rules. There is no configured AI provider. The optional adapter utility
+requires explicit consent, validates literal evidence, and is unused by the app
+unless a future integration deliberately supplies a provider and consent flow.

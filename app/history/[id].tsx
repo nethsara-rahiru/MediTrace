@@ -18,6 +18,41 @@ export default function HistoryDetail() {
         />
       </Page>
     );
+  if (scan.extraction_data)
+    return (
+      <Page>
+        <Back label="Scan history" />
+        <Heading
+          title="Recorded identification"
+          subtitle={new Date(scan.scanned_at).toLocaleString('en-GB')}
+        />
+        <Card>
+          <Badge
+            label={scan.status}
+            tone={scan.verification_status === 'saved' ? 'green' : 'amber'}
+          />
+          <Text style={{ color: colors.text, lineHeight: 22 }}>
+            {['pending', 'rejected'].includes(scan.verification_status ?? '')
+              ? 'Confirm the medicine identity before viewing extracted details.'
+              : 'Identity confirmation and field evidence are preserved with this scan.'}
+          </Text>
+        </Card>
+        <Button
+          title={
+            ['pending', 'rejected'].includes(scan.verification_status ?? '')
+              ? 'Confirm medicine identity'
+              : 'Review identification details'
+          }
+          onPress={() =>
+            router.push(
+              (['pending', 'rejected'].includes(scan.verification_status ?? '')
+                ? `/identify/${scan.id}`
+                : `/review/${scan.id}`) as any,
+            )
+          }
+        />
+      </Page>
+    );
   const product = products.find((p) => p.id === scan.product_id);
   return (
     <Page>

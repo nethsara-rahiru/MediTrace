@@ -50,6 +50,7 @@ export async function saveProduct(
   db: SQLiteDatabase,
   input: ProductInput,
   existingId?: number,
+  transaction: 'own' | 'existing' = 'own',
 ): Promise<number> {
   if (!input.name.trim()) throw new Error('Enter the product name.');
   if (!input.source.trim()) throw new Error('Describe where the product information came from.');
@@ -59,7 +60,7 @@ export async function saveProduct(
   if (identifiers.some((b) => b.length > 256 || /^https?:\/\//i.test(b)))
     throw new Error('Use a product identifier rather than a website address.');
   let id = existingId ?? 0;
-  await db.withTransactionAsync(async () => {
+  const write = async () => {
     for (const identifier of identifiers) {
       const duplicate = await db.getFirstAsync<{ product_id: number }>(
         'SELECT product_id FROM barcodes WHERE identifier=?',
@@ -92,16 +93,17 @@ export async function saveProduct(
       source!.id,
       input.verified_at,
       input.verification,
+      input.manufacturer_address?.trim() ?? '',
     ];
     if (existingId)
       await db.runAsync(
-        'UPDATE products SET name=?,generic_name=?,strength=?,dosage_form=?,manufacturer=?,country=?,category=?,pack_size=?,storage=?,warnings=?,indications=?,prescription=?,source_id=?,verified_at=?,verification=? WHERE id=?',
+        'UPDATE products SET name=?,generic_name=?,strength=?,dosage_form=?,manufacturer=?,country=?,category=?,pack_size=?,storage=?,warnings=?,indications=?,prescription=?,source_id=?,verified_at=?,verification=?,manufacturer_address=? WHERE id=?',
         ...values,
         existingId,
       );
     else {
       const r = await db.runAsync(
-        'INSERT INTO products(name,generic_name,strength,dosage_form,manufacturer,country,category,pack_size,storage,warnings,indications,prescription,source_id,verified_at,verification) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
+        'INSERT INTO products(name,generic_name,strength,dosage_form,manufacturer,country,category,pack_size,storage,warnings,indications,prescription,source_id,verified_at,verification,manufacturer_address) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)',
         ...values,
       );
       id = r.lastInsertRowId;
@@ -127,6 +129,8 @@ export async function saveProduct(
         ingredient.strength.trim(),
       );
     }
-  });
+  };
+  if (transaction === 'existing') await write();
+  else await db.withTransactionAsync(write);
   return id;
 }

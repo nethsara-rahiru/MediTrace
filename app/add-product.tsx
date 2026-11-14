@@ -111,6 +111,7 @@ export default function AddProduct() {
           {field('Manufacturer', 'manufacturer', 'Company name')}
           {field('Country of manufacture', 'country', 'As printed')}
         </View>
+        {field('Manufacturer address', 'manufacturer_address', 'As printed on the package', true)}
         {field('Category', 'category', 'Use a consistent category name')}
         <Field
           label="Product identifiers"

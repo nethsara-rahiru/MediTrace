@@ -16,6 +16,11 @@ have been completed.
 - [ ] Register the correct product/pack and repeat its scan in airplane mode.
 - [ ] Restart the standalone app in airplane mode and inspect SQLite records.
 - [ ] Test unknown code, malformed code and duplicate product identifier.
+- [ ] Verify no package fields appear before identity confirmation, including history/deep links.
+- [ ] Reject an identity, select/search/enter its replacement and check stale product facts are cleared.
+- [ ] Correct individual fields and confirm package details against the physical package.
+- [ ] Repeat a serialized scan, reconcile conflicts and verify quantity does not increase.
+- [ ] Check learned formats with distinct samples and contradictory mappings.
 - [ ] Test day-only, month-only, leap-year and unknown expiry inputs.
 - [ ] Verify ingredient overlap notices and incomplete-ingredient caveats.
 - [ ] Grant/deny notification permission and inspect generic lock-screen text.

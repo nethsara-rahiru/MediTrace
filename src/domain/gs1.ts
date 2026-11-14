@@ -1,14 +1,17 @@
 import { validGTIN } from './identifiers';
 import { gs1Expiry } from './expiry';
 export type GS1Result = {
+  rawFields?: Record<string, string>;
   gtin?: string;
   batch?: string;
+  manufacturing?: string;
+  manufacturingPrecision?: 'day' | 'month';
   expiry?: string;
   expiryPrecision?: 'day' | 'month';
   serial?: string;
   notes: string[];
 };
-const fixed: Record<string, number> = { '01': 14, '17': 6 };
+const fixed: Record<string, number> = { '01': 14, '11': 6, '17': 6 };
 const variable: Record<string, number> = { '10': 20, '21': 20 };
 export function parseGS1(raw: string): GS1Result {
   const out: GS1Result = { notes: [] };
@@ -64,6 +67,7 @@ export function parseGS1(raw: string): GS1Result {
       }
     }
   }
+  out.rawFields = { ...fields };
   for (const [ai, text] of Object.entries(fields)) {
     if (
       (fixed[ai] && text.length !== fixed[ai]) ||
@@ -78,6 +82,14 @@ export function parseGS1(raw: string): GS1Result {
     }
     if (ai === '10') out.batch = text;
     if (ai === '21') out.serial = text;
+    if (ai === '11') {
+      try {
+        out.manufacturing = gs1Expiry(text);
+        out.manufacturingPrecision = text.endsWith('00') ? 'month' : 'day';
+      } catch {
+        out.notes.push('Manufacturing field is not a valid date.');
+      }
+    }
     if (ai === '17') {
       try {
         out.expiry = gs1Expiry(text);
@@ -109,7 +121,7 @@ export function parseDigitalLink(raw: string): GS1Result | null {
       return { notes: ['Invalid URL encoding.'] };
     }
   }
-  for (const ai of ['10', '17', '21']) {
+  for (const ai of ['10', '11', '17', '21']) {
     if (url.searchParams.getAll(ai).length > 1 || (fields[ai] && url.searchParams.has(ai)))
       return { notes: ['Repeated Digital Link field.'] };
     if (url.searchParams.has(ai)) fields[ai] = url.searchParams.get(ai)!;

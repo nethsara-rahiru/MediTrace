@@ -15,7 +15,7 @@ npm start
 
 Open the project in a compatible Expo Go version on Android, or use a development
 build. Camera and notification behavior must be checked on a physical device.
-For the browser preview:
+For a compatible Expo Go client, run `npm start -- --go`. For the browser preview:
 
 ```sh
 npm run web
@@ -38,12 +38,23 @@ Browser preview does not establish native camera compatibility.
 - Home dashboard with live inventory and scan summaries.
 - Camera scanning with flashlight, manual entry and permission handling.
 - EAN/UPC validation, GTIN normalization, a documented GS1 subset and Digital Link parsing.
-- Exact offline identifier matching, explicit unknown results and inert website QR codes.
+- Offline identification from barcodes, GS1, labelled/unlabelled text, JSON and inert URLs.
+- Identity confirmation before details, manual correction, local suggestions and search.
+- Editable field evidence, separate package verification and duplicate-safe saving.
+- Local format learning from distinct reviewed samples, with conflict quarantine.
 - Product registration and editing, multiple identifiers and ingredients, source labels.
 - Library search by brand/generic name/ingredient, category and manufacturer filters.
-- Owned packs with quantity, batch, day/month/unknown expiry and ingredient overlap notices.
+- Owned packs with quantity, batch, manufacture/expiry precision, serials and ingredient overlap notices.
 - Expiry dashboard and opt-in generic local reminders on supported native builds.
 - Searchable recent scan history with stored scan details.
+
+## Intelligent identification
+
+See [the feature guide](docs/intelligent-identification.md) for extraction logic,
+SQLite migrations, confirmation rules, local format learning and limitations.
+[Delivery and file manifest](docs/identification-delivery.md) includes test evidence.
+Existing installations migrate automatically to schema version 4; do not clear
+app data to upgrade. No new package, backend or API key is required.
 
 ## Dataset status
 
@@ -70,7 +81,9 @@ npm run test:e2e
 
 The integration tests run the actual schema and repository SQL through Node's
 SQLite engine. Browser tests exercise Expo's real SQLite worker, registration,
-scanning, inventory, persistence, history and mobile navigation.
+scanning, identity gating, rejection/correction, field review, inventory,
+persistence, history, deletion and mobile navigation. A repeated scan/save is
+also exercised while the browser is offline after the app has loaded.
 
 For an existing Chromium installation, set
 `PLAYWRIGHT_CHROMIUM_EXECUTABLE_PATH=/path/to/chromium` when running browser tests.
@@ -90,7 +103,7 @@ No signed APK or physical-device acceptance test is implied by a successful web
 export. Use the [release checklist](docs/acceptance.md) before distribution.
 
 iOS uses the same React Native application, but has not yet been validated on an
-iPhone or simulator. No OCR, AI, online lookup, account system, MongoDB connection
+iPhone or simulator. No OCR, configured AI provider, online lookup, account system, MongoDB connection
 or cloud sync is included in this release.
 
 ## Medical information and privacy

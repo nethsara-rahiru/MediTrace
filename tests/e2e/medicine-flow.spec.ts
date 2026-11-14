@@ -41,7 +41,9 @@ test('register, scan, inventory, expiry and persistence work through SQLite', as
     .getByRole('textbox', { name: 'Barcode or QR content', exact: true })
     .fill('TEST-PACK-ALPHA');
   await page.getByRole('button', { name: 'Identify product', exact: true }).click();
-  await expect(page.getByText('Catalog match', { exact: true })).toBeVisible();
+  await expect(page.getByText('Is this your medicine?', { exact: true })).toBeVisible();
+  await page.getByRole('button', { name: 'Yes, correct medicine', exact: true }).click();
+  await expect(page.getByText('Review medicine details', { exact: true })).toBeVisible();
   await expect(page.getByText('Test Package Alpha', { exact: false }).first()).toBeVisible();
   await page.getByRole('button', { name: 'Scan another package', exact: true }).click();
   await page.getByRole('button', { name: 'Enter code manually', exact: true }).click();
@@ -49,7 +51,12 @@ test('register, scan, inventory, expiry and persistence work through SQLite', as
     .getByRole('textbox', { name: 'Barcode or QR content', exact: true })
     .fill('UNKNOWN-TEST-PACK');
   await page.getByRole('button', { name: 'Identify product', exact: true }).click();
-  await expect(page.getByText('Unknown product', { exact: true })).toBeVisible();
+  await expect(
+    page.getByText(
+      'We could not identify this medicine automatically. Please enter the medicine name printed on the packaging.',
+      { exact: true },
+    ),
+  ).toBeVisible();
   await page.goto('/history');
   await expect(page.getByText('UNKNOWN-TEST-PACK', { exact: true })).toBeVisible();
   await page
@@ -72,7 +79,12 @@ test('mobile navigation and manual scanning remain usable', async ({ page }) => 
     .getByRole('textbox', { name: 'Barcode or QR content', exact: true })
     .fill('https://example.com/unknown');
   await page.getByRole('button', { name: 'Identify product', exact: true }).click();
-  await expect(page.getByText('Website QR code', { exact: true })).toBeVisible();
+  await expect(
+    page.getByText(
+      'We could not identify this medicine automatically. Please enter the medicine name printed on the packaging.',
+      { exact: true },
+    ),
+  ).toBeVisible();
   await expect(
     page.getByRole('button', { name: 'Register this product', exact: true }),
   ).toHaveCount(0);

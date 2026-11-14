@@ -82,6 +82,7 @@ export default function ProductDetails() {
         >
           <Detail label="Manufacturer" value={p.manufacturer} />
           <Detail label="Country of manufacture" value={p.country} />
+          <Detail label="Manufacturer address" value={p.manufacturer_address ?? ''} />
           <Detail label="Pack size" value={p.pack_size} />
           <Detail label="Category" value={p.category} />
         </View>

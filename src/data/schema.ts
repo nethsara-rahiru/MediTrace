@@ -1,5 +1,5 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
-export const SCHEMA_VERSION = 2;
+export const SCHEMA_VERSION = 4;
 export const schema = `
 CREATE TABLE data_sources (
  id INTEGER PRIMARY KEY, description TEXT NOT NULL UNIQUE
@@ -62,6 +62,47 @@ export async function migrate(db: SQLiteDatabase) {
     await db.withTransactionAsync(async () => {
       await db.execAsync(
         'CREATE TABLE IF NOT EXISTS preferences (key TEXT PRIMARY KEY,value TEXT NOT NULL); PRAGMA user_version = 2;',
+      );
+    });
+  if ((version?.user_version ?? 0) < 3)
+    await db.withTransactionAsync(async () => {
+      await db.execAsync(`
+ALTER TABLE products ADD COLUMN manufacturer_address TEXT NOT NULL DEFAULT '';
+ALTER TABLE user_medicines ADD COLUMN manufacturing_date TEXT;
+ALTER TABLE user_medicines ADD COLUMN serial_number TEXT NOT NULL DEFAULT '';
+ALTER TABLE user_medicines ADD COLUMN verification_data TEXT NOT NULL DEFAULT '{}';
+CREATE UNIQUE INDEX inventory_product_serial ON user_medicines(product_id,serial_number) WHERE serial_number<>'';
+ALTER TABLE scan_history ADD COLUMN extraction_data TEXT;
+ALTER TABLE scan_history ADD COLUMN reviewed_data TEXT;
+ALTER TABLE scan_history ADD COLUMN identity_json TEXT;
+ALTER TABLE scan_history ADD COLUMN verification_status TEXT NOT NULL DEFAULT 'legacy' CHECK(verification_status IN ('legacy','pending','rejected','identity_confirmed','saved'));
+ALTER TABLE scan_history ADD COLUMN scan_token TEXT;
+ALTER TABLE scan_history ADD COLUMN package_id INTEGER REFERENCES user_medicines(id) ON DELETE SET NULL;
+ALTER TABLE scan_history ADD COLUMN rejection_count INTEGER NOT NULL DEFAULT 0;
+CREATE UNIQUE INDEX history_session_token ON scan_history(scan_token) WHERE scan_token IS NOT NULL;
+CREATE INDEX history_verified_payload ON scan_history(raw,verification_status);
+CREATE TABLE qr_format_templates (
+ id INTEGER PRIMARY KEY, signature TEXT NOT NULL, rules_json TEXT NOT NULL,
+ verification_status TEXT NOT NULL DEFAULT 'candidate' CHECK(verification_status IN ('candidate','locally_confirmed')),
+ confirmations INTEGER NOT NULL DEFAULT 0 CHECK(confirmations>=0),
+ created_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+ updated_at TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now')),
+ UNIQUE(signature,rules_json)
+);
+CREATE INDEX templates_signature ON qr_format_templates(signature,verification_status);
+CREATE TABLE template_observations (
+ template_id INTEGER NOT NULL REFERENCES qr_format_templates(id) ON DELETE CASCADE,
+ scan_id INTEGER NOT NULL REFERENCES scan_history(id) ON DELETE CASCADE,
+ payload TEXT NOT NULL,
+ PRIMARY KEY(template_id,payload)
+);
+PRAGMA user_version = 3;
+      `);
+    });
+  if ((version?.user_version ?? 0) < 4)
+    await db.withTransactionAsync(async () => {
+      await db.execAsync(
+        'ALTER TABLE barcodes ADD COLUMN source_scan_id INTEGER REFERENCES scan_history(id) ON DELETE SET NULL; PRAGMA user_version = 4;',
       );
     });
 }
