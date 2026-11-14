@@ -73,3 +73,18 @@ flow verifying that alternatives are hidden initially, appear after rejection,
 and disappear again when the replacement identity is selected. Current checks:
 67 automated tests and seven verified browser flows; Android bundle export,
 TypeScript and formatting pass. No schema or dependency change is needed.
+
+## Possible ingredient after confirming the first name
+
+When the user confirms the first proposed name and strength, the next distinct
+unlabelled text suggestion may populate Active ingredients as a low-confidence,
+unverified pattern suggestion. The review screen explicitly asks the user to
+check whether it really is an ingredient. Original text and its locator remain
+available as evidence; the original extraction is unchanged.
+
+This fallback does not replace existing labelled or catalog ingredients, use
+catalog-only product alternatives, or run when the accepted name/strength differs
+from the first proposal or the scan has an identity conflict. Address and code
+lines are excluded. Another plausible name is not proof of an ingredient; users
+can correct or clear it before saving. No database migration or dependency is
+required.

@@ -2,7 +2,8 @@ import type { Product } from '../types';
 import { validGTIN } from '../identifiers';
 import { catalogFields, assign, tokenValue } from './engine';
 import { chronologyError, readDate } from './dates';
-import { normalizeName, normalizeForm } from './text';
+import { normalizeName, normalizeForm, nameClues } from './text';
+import { bestIdentitySuggestion, rankedSuggestions } from './suggestions';
 import {
   emptyFields,
   evidence,
@@ -58,6 +59,47 @@ export function confirmIdentity(
         'The previous medicine prediction was rejected. Product-specific information was cleared and the selected identity was looked up again.',
       ]),
     ];
+  // Only the accepted first proposal enables this heuristic. Alternatives in the
+  // catalog can be different products, so require literal unlabelled evidence.
+  const first = bestIdentitySuggestion(original);
+  if (
+    !identity.override &&
+    !original.identityConflict &&
+    reviewed.fields.activeIngredients.value === null &&
+    original.fields.activeIngredients.value === null &&
+    first &&
+    normalizeName(first.name) === normalizeName(identity.name) &&
+    (first.strength ?? '').toLowerCase().replace(/\s/g, '') ===
+      (identity.strength ?? '').toLowerCase().replace(/\s/g, '')
+  ) {
+    const next = rankedSuggestions(original).find(
+      (candidate) =>
+        candidate.productId === null &&
+        candidate.key.startsWith('text:') &&
+        normalizeName(candidate.name) !== normalizeName(identity.name),
+    );
+    const token = next ? original.tokens.find((t) => `text:${t.locator}` === next.key) : null;
+    if (
+      token &&
+      ['name', 'strength_text'].includes(token.kind) &&
+      nameClues(token.raw).kind === 'name'
+    ) {
+      const clues = nameClues(token.raw);
+      reviewed.fields.activeIngredients = {
+        ...evidence(
+          [{ name: clues.name!, strength: clues.strength }],
+          token.raw,
+          'pattern',
+          token.locator,
+          'low',
+        ),
+        source: 'Next-best unlabelled name candidate; ingredient meaning is unconfirmed',
+      };
+      reviewed.issues.push(
+        'The next-best name was suggested as a possible ingredient. It could be another product name. Check the ingredients printed on the packaging.',
+      );
+    }
+  }
   return reviewed;
 }
 export function editField(
