@@ -1,4 +1,5 @@
-import type { Ingredient, Product } from '../types';
+import type { Product } from '../types';
+import type { DetectedIngredient as Ingredient } from './types';
 import { normalizeIdentifier, validGTIN } from '../identifiers';
 import { decodeScan } from '../scan';
 import { parseGS1 } from '../gs1';

@@ -1,5 +1,4 @@
-import type { FieldKey } from './types';
-import type { Ingredient } from '../types';
+import type { FieldKey, DetectedIngredient as Ingredient } from './types';
 export function normalizeName(value: string) {
   return value
     .normalize('NFKC')
@@ -51,18 +50,18 @@ export function ingredientsOf(raw: string): Ingredient[] | null {
     if (typeof item === 'string') {
       const name = nameOf(item);
       if (!name) return null;
-      result.push({ name, strength: strengthOf(item) ?? '' });
+      result.push({ name, strength: strengthOf(item) });
     } else if (item && typeof item === 'object' && !Array.isArray(item)) {
       const row = item as Record<string, unknown>;
       if (
         typeof row.name !== 'string' ||
         row.name.length > 160 ||
-        (row.strength !== undefined && typeof row.strength !== 'string')
+        (row.strength !== undefined && row.strength !== null && typeof row.strength !== 'string')
       )
         return null;
       result.push({
         name: row.name.trim(),
-        strength: typeof row.strength === 'string' ? row.strength.trim() : '',
+        strength: typeof row.strength === 'string' ? row.strength.trim() || null : null,
       });
     } else return null;
   }

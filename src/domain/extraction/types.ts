@@ -1,5 +1,6 @@
-import type { Ingredient, Product } from '../types';
+import type { Product } from '../types';
 
+export type DetectedIngredient = { name: string; strength: string | null };
 export type Method =
   | 'database'
   | 'history'
@@ -38,7 +39,7 @@ export type ScalarKey = (typeof scalarKeys)[number];
 export type FieldKey = ScalarKey | 'activeIngredients';
 export const fieldKeys: FieldKey[] = [...scalarKeys, 'activeIngredients'];
 export type Fields = { [K in ScalarKey]: ExtractedField<string> } & {
-  activeIngredients: ExtractedField<Ingredient[]>;
+  activeIngredients: ExtractedField<DetectedIngredient[]>;
 };
 export const productKeys: FieldKey[] = [
   'productName',
