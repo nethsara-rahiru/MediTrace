@@ -170,3 +170,32 @@ test('unlabelled strength, address and code clues choose a name without exposing
     'AB12 CD34 EF56',
   );
 });
+
+test('only the best name appears first and alternatives appear after rejection', async ({
+  page,
+}) => {
+  await page.setViewportSize({ width: 390, height: 844 });
+  await scan(page, 'Alphamed500mg\nBetamed250mg');
+  await expect(
+    page.getByText(
+      'Is this the largest medicine name printed on the box? Check its spelling and strength against the packaging.',
+      { exact: true },
+    ),
+  ).toBeVisible();
+  await expect(page.getByText('Alphamed 500mg', { exact: true })).toBeVisible();
+  await expect(page.getByText(/Betamed/)).toBeHidden();
+  await expect(page.getByText('Find the correct identity', { exact: true })).toHaveCount(0);
+  await expect(
+    page.getByRole('textbox', { name: 'Search local medicines', exact: true }),
+  ).toHaveCount(0);
+  await page.getByRole('button', { name: 'No, incorrect medicine', exact: true }).click();
+  await expect(page.getByText('Find the correct identity', { exact: true })).toBeVisible();
+  await page
+    .getByRole('button', { name: 'Betamed · 250mg Possible text identity', exact: true })
+    .click();
+  await expect(page.getByText('Betamed 250mg', { exact: true })).toBeVisible();
+  await expect(page.getByText('Find the correct identity', { exact: true })).toHaveCount(0);
+  await page.getByRole('button', { name: 'Yes, correct medicine', exact: true }).click();
+  await expect(page.getByText('Review medicine details', { exact: true })).toBeVisible();
+  await expect(page.getByText('Betamed 250mg', { exact: true })).toBeVisible();
+});
