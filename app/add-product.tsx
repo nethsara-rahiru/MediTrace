@@ -4,6 +4,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { Plus } from 'lucide-react-native';
 import { Page, Back, Heading, Card, Field, Button, Notice, Section } from '../src/components/ui';
 import { useData } from '../src/data/context';
+import { catalogConfig } from '../src/cloud/config';
 import { saveProduct } from '../src/data/products';
 import type { Ingredient, ProductInput } from '../src/domain/types';
 import { colors } from '../src/theme';
@@ -31,7 +32,7 @@ export default function AddProduct() {
     id?: string;
     identifier?: string;
   }>();
-  const { db, products, mutate } = useData();
+  const { db, products, mutate, syncUploads } = useData();
   const existing = products.find((p) => p.id === Number(id));
   const [form, setForm] = useState<ProductInput>(
     existing ?? { ...blank, barcodes: identifier ? [identifier] : [] },
@@ -75,8 +76,11 @@ export default function AddProduct() {
             verified_at: null,
           },
           existing?.id,
+          'own',
+          catalogConfig()?.url,
         ),
       );
+      void syncUploads().catch(() => undefined);
       router.replace(`/product/${productId}`);
     } catch (e) {
       setError((e as Error).message);
@@ -92,8 +96,9 @@ export default function AddProduct() {
         subtitle="Copy the exact product information from its packaging or a reliable source."
       />
       <Notice tone="amber">
-        Local entries are labelled user-entered. Saving a record does not independently verify its
-        medical information.
+        Product information is saved locally and shared with other users through the online catalog
+        when configured. Offline saves are queued. Do not enter personal information. Shared entries
+        remain labelled user-entered.
       </Notice>
       {Boolean(error) && <Notice tone="red">{error}</Notice>}
       <Section title="Product identity" />
@@ -188,11 +193,7 @@ export default function AddProduct() {
           'Leave blank unless supported by a local source',
         )}
       </Card>
-      <Button
-        title={existing ? 'Save changes' : 'Save product locally'}
-        onPress={save}
-        busy={busy}
-      />
+      <Button title={existing ? 'Save changes' : 'Save product'} onPress={save} busy={busy} />
     </Page>
   );
 }

@@ -21,6 +21,12 @@ export async function downloadCatalog(
   const counts = { added: 0, updated: 0, withdrawn: 0, conflicts: 0 };
   await db.withTransactionAsync(async () => {
     for (const row of records) {
+      const owned = await db.getFirstAsync(
+        'SELECT product_id FROM product_publications WHERE project_url=? AND remote_id=?',
+        config.url,
+        row.id,
+      );
+      if (owned && row.status === 'community') continue;
       const link = await db.getFirstAsync<{ product_id: number; snapshot: string }>(
         'SELECT product_id,snapshot FROM cloud_catalog_links WHERE project_url=? AND remote_id=?',
         config.url,

@@ -13,6 +13,7 @@ import {
   Section,
   Empty,
 } from '../../src/components/ui';
+import { CloudSaveStatus } from '../../src/components/CloudSaveStatus';
 import { colors } from '../../src/theme';
 function Detail({ label, value }: { label: string; value: string }) {
   return (
@@ -53,6 +54,7 @@ export default function ProductDetails() {
           />
         }
       />
+      <CloudSaveStatus productId={p.id} />
       <Card>
         <View
           style={{

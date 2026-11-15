@@ -1,5 +1,6 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
 import type { Ingredient, Product, ProductInput } from '../domain/types';
+import { queuePublication } from './publications';
 import { normalizeIdentifier } from '../domain/identifiers';
 const select = `SELECT p.*, COALESCE(s.description,'') AS source FROM products p LEFT JOIN data_sources s ON s.id=p.source_id`;
 async function hydrate(
@@ -51,6 +52,7 @@ export async function saveProduct(
   input: ProductInput,
   existingId?: number,
   transaction: 'own' | 'existing' = 'own',
+  shareProject?: string,
 ): Promise<number> {
   if (!input.name.trim()) throw new Error('Enter the product name.');
   if (!input.source.trim()) throw new Error('Describe where the product information came from.');
@@ -129,6 +131,7 @@ export async function saveProduct(
         ingredient.strength.trim(),
       );
     }
+    if (shareProject) await queuePublication(db, shareProject, id, input);
   };
   if (transaction === 'existing') await write();
   else await db.withTransactionAsync(write);

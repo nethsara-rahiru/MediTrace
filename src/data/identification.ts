@@ -257,6 +257,7 @@ export type SaveReviewOptions = {
   quantity: number;
   unit: string;
   duplicateChoice?: number | 'new';
+  shareProject?: string;
 };
 export async function saveIdentification(
   db: SQLiteDatabase,
@@ -330,7 +331,7 @@ export async function saveIdentification(
         verified_at: null,
         verification: 'user_entered',
       };
-      productId = await saveProduct(db, input, undefined, 'existing');
+      productId = await saveProduct(db, input, undefined, 'existing', options.shareProject);
     }
     const barcode = final.fields.gtin.value;
     if (barcode) {

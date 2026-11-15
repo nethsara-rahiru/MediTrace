@@ -4,7 +4,7 @@ export type CatalogConfig = { url: string; key: string };
 export type CatalogRecord = {
   id: string;
   updated_at: string;
-  status: 'approved' | 'withdrawn';
+  status: 'approved' | 'withdrawn' | 'community';
   product: ProductInput | null;
 };
 const textKeys = [
@@ -35,7 +35,7 @@ export function parseCatalogRecord(value: unknown): CatalogRecord {
     !/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(row.id) ||
     typeof row.updated_at !== 'string' ||
     !Number.isFinite(Date.parse(row.updated_at)) ||
-    !['approved', 'withdrawn'].includes(String(row.status))
+    !['approved', 'withdrawn', 'community'].includes(String(row.status))
   )
     throw new Error('Invalid shared catalog record.');
   if (row.status === 'withdrawn')
@@ -55,14 +55,15 @@ export function parseCatalogRecord(value: unknown): CatalogRecord {
   if (
     !product.name ||
     !product.source ||
-    raw.verification !== 'source_checked' ||
-    typeof raw.verified_at !== 'string' ||
-    !/^\d{4}-\d{2}-\d{2}$/.test(raw.verified_at) ||
-    new Date(raw.verified_at).toISOString().slice(0, 10) !== raw.verified_at
+    (row.status === 'approved' && raw.verification !== 'source_checked') ||
+    (row.status === 'approved' &&
+      (typeof raw.verified_at !== 'string' ||
+        !/^\d{4}-\d{2}-\d{2}$/.test(raw.verified_at) ||
+        new Date(raw.verified_at).toISOString().slice(0, 10) !== raw.verified_at))
   )
     throw new Error('Shared products need a name, source and valid review date.');
-  product.verification = 'source_checked';
-  product.verified_at = raw.verified_at;
+  product.verification = row.status === 'approved' ? 'source_checked' : 'user_entered';
+  product.verified_at = row.status === 'approved' ? (raw.verified_at as string) : null;
   if (
     !Array.isArray(raw.ingredients) ||
     raw.ingredients.length > 50 ||
@@ -97,7 +98,12 @@ export function parseCatalogRecord(value: unknown): CatalogRecord {
       }),
     ),
   ];
-  return { id: row.id, updated_at: row.updated_at, status: 'approved', product };
+  return {
+    id: row.id,
+    updated_at: row.updated_at,
+    status: row.status as CatalogRecord['status'],
+    product,
+  };
 }
 export async function fetchCatalog(
   config: CatalogConfig,

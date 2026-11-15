@@ -1,4 +1,4 @@
-import { test, expect, type Page } from '@playwright/test';
+import { test, expect, type Page } from './fixtures';
 const packageCheck = 'I checked the package details against the physical packaging.';
 async function scan(page: Page, raw: string) {
   await page.goto('/scanner');
