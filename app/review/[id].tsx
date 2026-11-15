@@ -26,6 +26,7 @@ import { packageKeys, type FieldKey, type Token } from '../../src/domain/extract
 import { parseExpiry, expiryState } from '../../src/domain/expiry';
 import { chronologyError } from '../../src/domain/extraction/dates';
 import { colors } from '../../src/theme';
+import { catalogConfig } from '../../src/cloud/config';
 import { reconcileReminders } from '../../src/services/reminders';
 function Check({
   label,
@@ -73,7 +74,7 @@ export default function ReviewMedicine() {
   const { db, mutate, session, setSession, loading, error, setError, reload } = useIdentification(
     Number(id),
   );
-  const { inventory } = useData();
+  const { inventory, syncUploads } = useData();
   const [checked, setChecked] = useState(false),
     [conflict, setConflict] = useState(false),
     [busy, setBusy] = useState(false),
@@ -218,8 +219,10 @@ export default function ReviewMedicine() {
           quantity: Number(quantity),
           unit,
           duplicateChoice: duplicate,
+          shareProject: catalogConfig()?.url,
         }),
       );
+      void syncUploads().catch(() => undefined);
       await reconcileReminders(db).catch(() => undefined);
       await reload();
     } catch (e) {
@@ -293,6 +296,10 @@ export default function ReviewMedicine() {
       )}
       <Section title="Product information" />
       {field('activeIngredients')}
+      <Notice>
+        New product reference information is also shared online as user-entered data. Your package
+        details, quantities, serial numbers and scan history stay on this device.
+      </Notice>
       {field('manufacturer')}
       {field('manufacturerAddress')}
       <Section title="Package information" />

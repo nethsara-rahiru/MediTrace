@@ -13,6 +13,10 @@ export default defineConfig({
   projects: [{ name: 'chromium', use: { ...devices['Desktop Chrome'] } }],
   webServer: {
     command: 'npx expo start --web --port 8081',
+    env: {
+      EXPO_PUBLIC_SUPABASE_URL: 'https://medtrace-tests.supabase.co',
+      EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY: 'sb_publishable_browser_test_only',
+    },
     url: 'http://localhost:8081',
     reuseExistingServer: !process.env.CI,
     timeout: 180000,

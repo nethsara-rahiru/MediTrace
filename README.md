@@ -55,7 +55,7 @@ SQLite migrations, confirmation rules, local format learning and limitations.
 [Delivery and file manifest](docs/identification-delivery.md) includes test evidence.
 [Name-detection rules](docs/name-detection.md) explain the newer numeric, strength
 and address clues and their exceptions.
-Existing installations migrate automatically to schema version 5; do not clear
+Existing installations migrate automatically to schema version 6; do not clear
 app data to upgrade. No new package, backend or API key is required.
 
 ## Dataset status
@@ -130,5 +130,7 @@ GitHub Actions validates source checks and browser flows on future pushes.
 ## Shared online catalog
 
 See [Supabase setup](docs/supabase-setup.md) for the one-time SQL setup and public
-environment variables. Library → Shared catalog downloads reviewed products into
-SQLite. Personal records stay local; online product submission is not enabled.
+environment variables. Library → Shared catalog downloads shared products into
+SQLite. App product saves also publish user-entered reference information online,
+with a durable offline retry queue. Personal package records stay local. Run
+Supabase migration 002 to enable direct saves.

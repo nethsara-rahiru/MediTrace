@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from './fixtures';
 // Synthetic, isolated browser records. Never imported into the catalog.
 test('register, scan, inventory, expiry and persistence work through SQLite', async ({ page }) => {
   const errors: string[] = [];
@@ -21,7 +21,7 @@ test('register, scan, inventory, expiry and persistence work through SQLite', as
   await page
     .getByRole('textbox', { name: 'Information source *', exact: true })
     .fill('Synthetic browser test; not a medicine record');
-  await page.getByRole('button', { name: 'Save product locally', exact: true }).click();
+  await page.getByRole('button', { name: 'Save product', exact: true }).click();
   await expect(
     page.getByText('User-entered · not independently verified', { exact: true }),
   ).toBeVisible();

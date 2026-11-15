@@ -6,7 +6,7 @@ import { catalogConfig } from '../src/cloud/config';
 import { downloadCatalog } from '../src/data/catalog';
 import { colors } from '../src/theme';
 export default function SharedCatalog() {
-  const { db, mutate } = useData();
+  const { db, mutate, publications, syncUploads } = useData();
   const [busy, setBusy] = useState(false),
     [message, setMessage] = useState(''),
     [error, setError] = useState(''),
@@ -37,6 +37,19 @@ export default function SharedCatalog() {
       active = false;
     };
   }, [db, projectUrl]);
+  async function retryUploads() {
+    setBusy(true);
+    setError('');
+    setMessage('');
+    try {
+      const count = await syncUploads();
+      setMessage(`${count} online saves completed. Any remaining saves stay queued.`);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
   async function download() {
     if (!config) return;
     setBusy(true);
@@ -59,7 +72,7 @@ export default function SharedCatalog() {
       <Back label="Medicine library" />
       <Heading
         title="Shared catalog"
-        subtitle="Download reviewed medicine information for future offline scans."
+        subtitle="Share product information and download the catalog for offline scans."
       />
       <Card>
         <Text style={{ color: colors.navy, fontSize: 18, fontWeight: '700' }}>
@@ -67,7 +80,8 @@ export default function SharedCatalog() {
         </Text>
         <Text style={{ color: colors.muted, lineHeight: 23 }}>
           This connects to the shared MedTrace catalog. Your personal medicines, scan history and
-          photographs stay on this device. Downloads use an internet connection.
+          photographs stay on this device. Products you save are shared online as user-entered
+          information. Offline product saves are queued for retry.
         </Text>
         <Text style={{ color: colors.muted }}>
           Last successful download: {last ? new Date(last).toLocaleString() : 'Not downloaded yet'}
@@ -77,6 +91,29 @@ export default function SharedCatalog() {
           busy={busy}
           disabled={!config}
           onPress={() => void download()}
+        />
+      </Card>
+      <Card>
+        <Text style={{ color: colors.navy, fontSize: 18, fontWeight: '700' }}>
+          Online product saves
+        </Text>
+        <Text style={{ color: colors.muted }}>
+          {publications.filter((p) => p.project_url === projectUrl && p.pending).length} waiting to
+          upload
+        </Text>
+        {publications
+          .filter((p) => p.project_url === projectUrl && p.pending)
+          .map((p) => (
+            <Notice key={p.product_id} tone="amber">
+              {p.name}: {p.last_error || 'Saved locally; waiting to upload.'}
+            </Notice>
+          ))}
+        <Button
+          title="Retry online saves"
+          variant="secondary"
+          busy={busy}
+          disabled={!config}
+          onPress={() => void retryUploads()}
         />
       </Card>
       {(!config || configurationError) && (

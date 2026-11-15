@@ -1,5 +1,23 @@
 # Validation record
 
+## Direct online product saves — 15 November 2026
+
+- TypeScript, formatting and Android JavaScript/Hermes export: passed.
+- Automated tests: **92 passed**. New coverage includes atomic product/outbox
+  saves, public-field whitelisting, retry identity, edits, offline persistence,
+  stale acknowledgements, barcode conflicts and private-package exclusion.
+- Full browser suite: **11 passed**, including immediate publication, editing
+  with the same publication ID, offline reload/retry and existing medicine flows.
+  Shared fixtures block unmocked Supabase requests; CI uses synthetic connection values.
+- Supabase migration 002 executed in isolated PGlite PostgreSQL: direct public
+  publication and owner edits succeeded; retries were idempotent; duplicate
+  normalized barcodes, cross-device edits, extra personal fields and edits to
+  reviewed records were rejected. Public writes could not claim source verification
+  or read private write-key hashes.
+- Live catalog remained empty during verification. No synthetic production data
+  was added. Migration 002 still needs to be applied through the project dashboard.
+- SQLite schema 6; SDK-compatible `expo-crypto` added for secure native write tokens.
+
 ## Supabase shared catalog — 15 November 2026
 
 - TypeScript, formatting and Android JavaScript/Hermes export: passed.
