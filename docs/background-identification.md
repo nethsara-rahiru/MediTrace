@@ -2,15 +2,44 @@
 
 After medicine identity confirmation, the existing SQLite/scan result appears
 immediately. An asynchronous Supabase request checks the confirmed identity without
-holding a SQLite transaction or waiting to display the page. Before confirmation,
-this workflow sends no identification lookup to Supabase.
+holding a SQLite transaction or waiting to display the page. For a barcode with no local identity, a separate identifier-only online lookup
+first proposes its name, strength, form and pack size. The user must confirm that
+proposal before any remaining details are displayed. Codes with local matches or
+QR payloads already containing a name retain immediate local confirmation.
 
 The request sends a product identifier or confirmed name, never raw scanned text,
 photographs, batch/serial numbers, expiry details or personal inventory. It uses
 the existing public catalog and policies; no additional Supabase migration or
-backend is needed. SQLite migrates automatically to schema 7.
+backend is needed. SQLite migrates automatically to schema 8.
 
-## Matching
+## Unknown barcodes before name confirmation
+
+A traditional barcode usually carries an identifier, not a medicine name. If the
+local extraction has no identity suggestion and contains a product identifier,
+the confirmation screen looks up that identifier online. It never sends an empty
+or guessed medicine name. The screen shows progress, permits manual entry and
+rescan, and labels a matching proposal **Identity source: Online database**.
+
+The request checks equivalent valid GTIN/EAN/UPC representations, including
+GTIN-14 padding and legacy unpadded identifiers stored by administrators. It only
+proposes a record whose returned barcode normalizes to the scanned identifier.
+Multiple matches, withdrawal, unavailable network and malformed responses retain
+manual identification and retry options.
+
+Before Yes, only the proposed identity is displayed. Details are held in the
+per-scan lookup result rather than imported as a reusable local medicine. Yes
+atomically caches the matching product and confirms its identity; remaining
+fields then carry their online retrieval and original verification status. No
+repeated network request is needed to reveal details already fetched. No clears
+the proposal without importing it. Late replies cannot attach to rejected or
+already confirmed sessions. Original scan/extraction data stays unchanged.
+
+`scan_identity_lookups` persists this provisional result in SQLite schema 8.
+There is no new Supabase migration or dependency. Full catalog downloads remain
+optional; an unknown barcode can resolve directly from the shared online catalog.
+Draft records remain hidden under the existing server access policies.
+
+## Matching after confirmation
 
 1. Check an existing remote catalog link or the current device's publication ID.
 2. Look up the normalized barcode when available.
