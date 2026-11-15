@@ -125,8 +125,8 @@ All pages are validated before an atomic SQLite import. Malformed data or write
 failure leaves the existing library unchanged. Local edits and barcode conflicts
 are preserved; refreshed counts include unchanged downloaded records. Concurrent
 publisher changes may require another download because pages are not a single
-server snapshot. Full catalog downloads are manual; confirmed scans also perform a targeted
-background lookup. See [background identification](background-identification.md).
+server snapshot. Full catalog downloads are manual. Unknown barcodes can fetch an online identity
+before user confirmation; confirmed scans also perform a targeted background lookup. See [background identification](background-identification.md).
 No realtime subscription is configured.
 
 ## Database and verification
@@ -134,7 +134,8 @@ No realtime subscription is configured.
 SQLite schema 6 added `product_publications`, storing product/project mapping,
 remote ID, device write capability, public payload and pending/error state. Schema
 5's `cloud_catalog_links` continues to track downloaded records and local snapshots.
-Schema 7 adds per-scan online-check results in `scan_catalog_checks`. Existing
+Schema 7 added per-scan online-check results in `scan_catalog_checks`; schema 8
+adds provisional barcode-to-name results in `scan_identity_lookups`. Existing
 records remain intact. Supabase migration 002 adds private write-key and
 normalized unique-barcode tables, a barcode trigger and the publication function.
 

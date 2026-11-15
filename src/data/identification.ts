@@ -97,6 +97,14 @@ export async function getSession(db: SQLiteDatabase, id: number): Promise<Sessio
     identity: row.identity_json ? (JSON.parse(row.identity_json) as Identity) : null,
     packageId: row.package_id,
     rejectionCount: row.rejection_count,
+    onlineIdentity: JSON.parse(
+      (
+        await db.getFirstAsync<{ result: string }>(
+          'SELECT result FROM scan_identity_lookups WHERE scan_id=?',
+          id,
+        )
+      )?.result ?? 'null',
+    ),
     onlineCheck: JSON.parse(
       (
         await db.getFirstAsync<{ result: string }>(

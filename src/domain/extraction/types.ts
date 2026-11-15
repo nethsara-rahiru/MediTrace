@@ -1,3 +1,4 @@
+import type { IdentityLookup } from '../identityLookup';
 import type { OnlineCheck } from '../catalogCheck';
 import type { Product } from '../types';
 
@@ -102,6 +103,7 @@ export type Session = {
   packageId: number | null;
   rejectionCount: number;
   onlineCheck?: OnlineCheck | null;
+  onlineIdentity?: IdentityLookup | null;
 };
 export type TemplateRule = { field: FieldKey; locator: string };
 export type FormatTemplate = {

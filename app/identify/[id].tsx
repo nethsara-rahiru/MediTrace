@@ -3,6 +3,9 @@ import { ActivityIndicator, Pressable, Text, View } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { Pill, ScanLine } from 'lucide-react-native';
 import { Page, Back, Heading, Card, Badge, Button, Field, Notice } from '../../src/components/ui';
+import { useOnlineIdentity } from '../../src/hooks/useOnlineIdentity';
+import { confirmOnlineIdentity } from '../../src/data/onlineIdentity';
+import { catalogConfig } from '../../src/cloud/config';
 import { useIdentification } from '../../src/hooks/useIdentification';
 import { useData } from '../../src/data/context';
 import { acceptIdentity, rejectIdentity } from '../../src/data/identification';
@@ -27,6 +30,7 @@ export default function ConfirmMedicine() {
     [strength, setStrength] = useState(''),
     [form, setForm] = useState(''),
     [busy, setBusy] = useState(false);
+  const onlineIdentity = useOnlineIdentity(session, setSession);
   if (loading)
     return (
       <Page>
@@ -63,7 +67,7 @@ export default function ConfirmMedicine() {
       </Page>
     );
   const original = session.original;
-  const defaultCandidate = bestIdentitySuggestion(original);
+  const defaultCandidate = bestIdentitySuggestion(original) ?? onlineIdentity.suggestion;
   const chosen = selected ?? (session.state === 'rejected' ? null : defaultCandidate);
   const predictedName = chosen?.name ?? null;
   const predictedStrength = chosen?.strength ?? null;
@@ -74,7 +78,8 @@ export default function ConfirmMedicine() {
     setBusy(true);
     setError('');
     try {
-      const rejected = selected ?? bestIdentitySuggestion(session!.original);
+      const rejected =
+        selected ?? bestIdentitySuggestion(session!.original) ?? onlineIdentity.suggestion;
       await mutate(() => rejectIdentity(db, session!.id));
       if (rejected) setRejectedKeys((keys) => [...new Set([...keys, rejected.key])]);
       setSession({
@@ -97,18 +102,20 @@ export default function ConfirmMedicine() {
     setError('');
     try {
       const next = await mutate(() =>
-        acceptIdentity(
-          db,
-          session!.id,
-          manual
-            ? { name, strength, dosageForm: form }
-            : {
-                productId: chosen?.productId,
-                name: predictedName ?? '',
-                strength: predictedStrength ?? '',
-                dosageForm: predictedForm ?? '',
-              },
-        ),
+        !manual && chosen?.key.startsWith('online:')
+          ? confirmOnlineIdentity(db, session!.id, chosen.key.slice(7), catalogConfig().url)
+          : acceptIdentity(
+              db,
+              session!.id,
+              manual
+                ? { name, strength, dosageForm: form }
+                : {
+                    productId: chosen?.productId,
+                    name: predictedName ?? '',
+                    strength: predictedStrength ?? '',
+                    dosageForm: predictedForm ?? '',
+                  },
+            ),
       );
       setSession(next);
       router.replace(`/review/${session!.id}`);
@@ -139,12 +146,36 @@ export default function ConfirmMedicine() {
         subtitle="Is this the largest medicine name printed on the box? Check its spelling and strength against the packaging."
       />
       {Boolean(error) && <Notice tone="red">{error}</Notice>}
+      {onlineIdentity.checking && (
+        <Card>
+          <ActivityIndicator color={colors.teal} />
+          <Text style={{ color: colors.muted }}>
+            No local match. Looking up the barcode online…
+          </Text>
+        </Card>
+      )}
+      {Boolean(onlineIdentity.error) && <Notice tone="amber">{onlineIdentity.error}</Notice>}
+      {onlineIdentity.lookup && onlineIdentity.lookup.status !== 'matched' && (
+        <Notice>{onlineIdentity.lookup.message}</Notice>
+      )}
+      {!onlineIdentity.checking && onlineIdentity.lookup && session.state === 'pending' && (
+        <Button
+          title="Retry online barcode lookup"
+          variant="secondary"
+          onPress={onlineIdentity.retry}
+          disabled={busy}
+        />
+      )}
+
       {predictedName && !manual ? (
         <Card style={{ alignItems: 'center', paddingVertical: 32 }}>
           <View style={{ padding: 17, backgroundColor: colors.mint, borderRadius: 19 }}>
             <Pill size={30} color={colors.teal} />
           </View>
           <Badge label="Please confirm identity" tone="amber" />
+          {chosen?.key.startsWith('online:') && (
+            <Badge label="Identity source: Online database" tone="neutral" />
+          )}
           <Text style={{ fontSize: 14, color: colors.muted }}>Medicine detected</Text>
           <Text
             accessibilityRole="header"
@@ -162,9 +193,11 @@ export default function ConfirmMedicine() {
         </Card>
       ) : (
         <Notice>
-          {session.state === 'rejected'
-            ? 'Choose another suggestion, search the library or enter the medicine name printed on the box.'
-            : 'We could not identify this medicine automatically. Please enter the medicine name printed on the packaging.'}
+          {onlineIdentity.checking
+            ? 'This barcode does not contain a medicine name. Checking the online catalog; manual entry is also available.'
+            : session.state === 'rejected'
+              ? 'Choose another suggestion, search the library or enter the medicine name printed on the box.'
+              : 'We could not identify this medicine automatically. Please enter the medicine name printed on the packaging.'}
         </Notice>
       )}
       {original.identityConflict && (

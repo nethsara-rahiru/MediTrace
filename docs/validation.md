@@ -1,5 +1,20 @@
 # Validation record
 
+## Online barcode identity before confirmation — 15 November 2026
+
+- Automated tests: **115 passed**. New coverage includes unknown EAN identification,
+  hidden/unimported facts before Yes, explicit confirmation/cache, rejected and
+  late results, local-match priority, manual fallback, unrelated identifiers and
+  equivalent padded/unpadded GTIN lookups.
+- Full browser suite: **17 passed**, including online-only barcode → proposed name
+  → confirmation → details → offline rescan, and rejection followed by a manual
+  identity without importing the rejected product's facts.
+- TypeScript, formatting and Android JavaScript/Hermes export: passed.
+- Live combined barcode filter returned HTTP 200 in a read-only query. No online
+  product data was created or modified during testing.
+- SQLite schema 8 adds `scan_identity_lookups`. No new Supabase migration or
+  application dependency is required.
+
 ## Background online identification and source labels — 15 November 2026
 
 - Automated tests: **109 passed**, including exact online matching, conflict
