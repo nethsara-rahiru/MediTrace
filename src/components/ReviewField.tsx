@@ -99,6 +99,20 @@ export function ReviewField({
           }
         />
       </View>
+      <Text style={{ fontSize: 12, color: colors.muted }}>
+        Data source:{' '}
+        {field.value === null
+          ? 'Not available'
+          : field.retrieval === 'online' && field.origin === 'catalog'
+            ? 'Online database'
+            : field.origin === 'catalog'
+              ? 'Local database'
+              : field.origin === 'history'
+                ? 'Previous local scan'
+                : field.origin === 'manual'
+                  ? 'User correction'
+                  : 'Product scan data'}
+      </Text>
       {fieldKey === 'activeIngredients' &&
         field.method === 'pattern' &&
         field.verification === 'unverified' && (
@@ -116,6 +130,7 @@ export function ReviewField({
           <Field
             label={label}
             value={text}
+            editable={!busy}
             onChangeText={(v) => {
               setText(v);
               onDirty(v !== initial);
@@ -185,7 +200,10 @@ export function ReviewField({
       {showSource && (
         <View style={{ gap: 8 }}>
           <Text style={{ fontSize: 12, color: colors.muted, lineHeight: 20 }}>
-            Method: {methodLabels[field.method] ?? field.method}
+            Method:{' '}
+            {field.retrieval === 'online' && field.origin === 'catalog'
+              ? 'Online catalog'
+              : (methodLabels[field.method] ?? field.method)}
             {'\n'}Source: {field.source ?? 'Not available'}
             {'\n'}Parser confidence: {field.confidence}. This is not a guarantee of accuracy.
           </Text>

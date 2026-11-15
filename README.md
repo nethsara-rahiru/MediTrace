@@ -55,7 +55,7 @@ SQLite migrations, confirmation rules, local format learning and limitations.
 [Delivery and file manifest](docs/identification-delivery.md) includes test evidence.
 [Name-detection rules](docs/name-detection.md) explain the newer numeric, strength
 and address clues and their exceptions.
-Existing installations migrate automatically to schema version 6; do not clear
+Existing installations migrate automatically to schema version 7; do not clear
 app data to upgrade. No new package, backend or API key is required.
 
 ## Dataset status
@@ -134,3 +134,7 @@ environment overrides. The app includes its public MedTrace connection settings.
 SQLite. App product saves also publish user-entered reference information online,
 with a durable offline retry queue. Personal package records stay local. Run
 Supabase migration 002 to enable direct saves.
+
+After a scanned medicine name is confirmed, local information appears immediately
+and an online lookup runs in the background. See
+[background identification and source labels](docs/background-identification.md).
