@@ -3,7 +3,7 @@ import type { Product } from '../domain/types';
 import { getProduct, saveProduct } from './products';
 import { fetchCatalog, type CatalogConfig } from '../cloud/catalog';
 // Snapshot the stored canonical values, including lowercased ingredient names.
-function snapshot(product: Product) {
+export function snapshot(product: Product) {
   const { id, created_at, ...fields } = product;
   return JSON.stringify({
     ...fields,

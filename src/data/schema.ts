@@ -1,5 +1,5 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
-export const SCHEMA_VERSION = 7;
+export const SCHEMA_VERSION = 8;
 export const schema = `
 CREATE TABLE data_sources (
  id INTEGER PRIMARY KEY, description TEXT NOT NULL UNIQUE
@@ -138,6 +138,16 @@ CREATE TABLE scan_catalog_checks (
  result TEXT NOT NULL
 );
 PRAGMA user_version = 7;
+      `);
+    });
+  if ((version?.user_version ?? 0) < 8)
+    await db.withTransactionAsync(async () => {
+      await db.execAsync(`
+CREATE TABLE scan_identity_lookups (
+ scan_id INTEGER PRIMARY KEY REFERENCES scan_history(id) ON DELETE CASCADE,
+ result TEXT NOT NULL
+);
+PRAGMA user_version = 8;
       `);
     });
 }
