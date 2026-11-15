@@ -1,5 +1,17 @@
 # Validation record
 
+## Bundled connection and local-save recovery — 15 November 2026
+
+- Automated tests: **98 passed**. Connection fallback, complete/partial overrides,
+  recovery of unqueued products, credential preservation and private-data exclusion covered.
+- Publication browser flows: **3 passed**, including visible connection/recovery
+  controls, online editing and offline reload/retry.
+- TypeScript, formatting and Android export: passed. Android export ran with
+  environment-file loading disabled and no Supabase environment overrides; the
+  generated Hermes bundle contains the built-in MedTrace project URL.
+- A rejected invalid-input probe confirmed the live publication function exists;
+  no online product was created. No new SQL migration or dependency is required.
+
 ## Direct online product saves — 15 November 2026
 
 - TypeScript, formatting and Android JavaScript/Hermes export: passed.

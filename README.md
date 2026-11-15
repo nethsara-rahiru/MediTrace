@@ -129,8 +129,8 @@ GitHub Actions validates source checks and browser flows on future pushes.
 
 ## Shared online catalog
 
-See [Supabase setup](docs/supabase-setup.md) for the one-time SQL setup and public
-environment variables. Library → Shared catalog downloads shared products into
+See [Supabase setup](docs/supabase-setup.md) for the one-time SQL setup and optional
+environment overrides. The app includes its public MedTrace connection settings. Library → Shared catalog downloads shared products into
 SQLite. App product saves also publish user-entered reference information online,
 with a durable offline retry queue. Personal package records stay local. Run
 Supabase migration 002 to enable direct saves.

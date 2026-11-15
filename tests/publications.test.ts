@@ -255,3 +255,66 @@ test('a newly identified medicine queues its product but excludes the personal p
     native.close();
   }
 });
+
+test('recovery queues unshared local products once and preserves existing publication credentials', async () => {
+  const { db, native } = await database();
+  try {
+    const old = await saveProduct(db, fixture());
+    const { queueExistingLocalProducts } = await import('../src/data/products');
+    assert.equal(await queueExistingLocalProducts(db, config.url), 1);
+    const first = await db.getFirstAsync(
+      'SELECT remote_id,write_token FROM product_publications WHERE product_id=?',
+      old,
+    );
+    assert.equal(await queueExistingLocalProducts(db, config.url), 0);
+    assert.deepEqual(
+      await db.getFirstAsync(
+        'SELECT remote_id,write_token FROM product_publications WHERE product_id=?',
+        old,
+      ),
+      first,
+    );
+    await flushPublications(db, config, ack);
+    assert.equal((await listPublicationStates(db))[0].pending, 0);
+    assert.equal(await queueExistingLocalProducts(db, config.url), 0);
+  } finally {
+    native.close();
+  }
+});
+test('recovery excludes downloaded records and does not upload private inventory data', async () => {
+  const { db, native } = await database();
+  try {
+    const local = await saveProduct(db, fixture());
+    await db.runAsync(
+      'INSERT INTO user_medicines(product_id,quantity,batch) VALUES (?,?,?)',
+      local,
+      4,
+      'PRIVATEBATCH',
+    );
+    await downloadCatalog(
+      db,
+      config,
+      async () =>
+        new Response(
+          JSON.stringify([
+            {
+              id: '11111111-1111-4111-8111-111111111111',
+              updated_at: '2026-11-15T00:00:00Z',
+              status: 'community',
+              product: { ...fixture(), barcodes: ['DOWNLOADED-TEST'] },
+            },
+          ]),
+        ),
+    );
+    const { queueExistingLocalProducts } = await import('../src/data/products');
+    assert.equal(await queueExistingLocalProducts(db, config.url), 1);
+    const rows = await db.getAllAsync<{ product_id: number; payload: string }>(
+      'SELECT product_id,payload FROM product_publications',
+    );
+    assert.equal(rows[0].product_id, local);
+    assert.doesNotMatch(rows[0].payload, /PRIVATEBATCH|quantity/);
+    assert.equal(rows.length, 1);
+  } finally {
+    native.close();
+  }
+});

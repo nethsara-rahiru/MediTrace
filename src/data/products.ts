@@ -137,3 +137,23 @@ export async function saveProduct(
   else await db.withTransactionAsync(write);
   return id;
 }
+
+// Recover saves made before online configuration was available. Downloaded records
+// and already queued/published products are excluded; this never resets write tokens.
+export async function queueExistingLocalProducts(db: SQLiteDatabase, projectUrl: string) {
+  let queued = 0;
+  await db.withTransactionAsync(async () => {
+    const rows = await db.getAllAsync<{ id: number }>(
+      'SELECT p.id FROM products p WHERE NOT EXISTS(SELECT 1 FROM cloud_catalog_links c WHERE c.product_id=p.id) AND NOT EXISTS(SELECT 1 FROM product_publications u WHERE u.product_id=p.id AND u.project_url=?) ORDER BY p.id',
+      projectUrl,
+    );
+    for (const row of rows) {
+      const product = await getProduct(db, row.id);
+      if (product) {
+        await queuePublication(db, projectUrl, row.id, product);
+        queued++;
+      }
+    }
+  });
+  return queued;
+}

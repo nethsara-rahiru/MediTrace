@@ -68,3 +68,18 @@ test('an offline save persists across reload and retries online without duplicat
     page.getByRole('button', { name: /^View Synthetic offline share product\s*$/, exact: true }),
   ).toHaveCount(1);
 });
+
+test('shared catalog exposes connection and recovery controls without requiring new products', async ({
+  page,
+}) => {
+  await page.goto('/shared-catalog');
+  await expect(page.getByRole('button', { name: 'Retry online saves', exact: true })).toBeEnabled();
+  await expect(page.getByText(/Connected project:/)).toBeVisible();
+  await page.getByRole('button', { name: 'Queue existing local products', exact: true }).click();
+  await expect(
+    page.getByText(
+      '0 local products queued · 0 online saves completed. Any remaining saves stay queued.',
+      { exact: true },
+    ),
+  ).toBeVisible();
+});
