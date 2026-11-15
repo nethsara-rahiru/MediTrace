@@ -49,6 +49,11 @@ export default function Library() {
           />
         }
       />
+      <Button
+        title="Shared catalog"
+        variant="secondary"
+        onPress={() => router.push('/shared-catalog')}
+      />
       <Field
         label="Search the library"
         placeholder="Brand, generic name, ingredient or strength…"

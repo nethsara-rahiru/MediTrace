@@ -1,5 +1,19 @@
 # Validation record
 
+## Supabase shared catalog — 15 November 2026
+
+- TypeScript, formatting and Android JavaScript/Hermes export: passed.
+- Automated tests: **81 passed**, including catalog persistence, conflicts,
+  withdrawals, malformed responses, pagination, offline errors and rollback.
+- New browser flows: **2 passed**, covering download/reload/offline identification
+  and missing-schema/empty-catalog states. Responses were intercepted synthetic data.
+- Migration and access policies executed in an isolated PGlite PostgreSQL engine:
+  RLS enabled, drafts hidden, approved/withdrawn rows readable, anonymous and
+  authenticated writes denied, and missing verification rejected.
+- Live project accepted the public key but returned PGRST205 for the missing table.
+  Applying the supplied SQL and testing a real download remain dashboard setup steps.
+- SQLite schema version 5; no new app dependencies or native modules.
+
 ## Single-name confirmation — 14 November 2026
 
 - TypeScript, formatting and Android JavaScript/Hermes export: passed.
