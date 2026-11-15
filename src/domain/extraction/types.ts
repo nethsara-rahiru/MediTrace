@@ -1,3 +1,4 @@
+import type { OnlineCheck } from '../catalogCheck';
 import type { Product } from '../types';
 
 export type DetectedIngredient = { name: string; strength: string | null };
@@ -22,6 +23,7 @@ export type ExtractedField<T> = {
   source: string | null;
   origin: 'payload' | 'catalog' | 'history' | 'manual';
   locator: string | null;
+  retrieval?: 'local' | 'online';
 };
 export const scalarKeys = [
   'productName',
@@ -99,6 +101,7 @@ export type Session = {
   identity: Identity | null;
   packageId: number | null;
   rejectionCount: number;
+  onlineCheck?: OnlineCheck | null;
 };
 export type TemplateRule = { field: FieldKey; locator: string };
 export type FormatTemplate = {
