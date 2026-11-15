@@ -307,7 +307,7 @@ test('version two migration preserves an existing medicine, stock and legacy sca
     );
     assert.equal(
       (await db.getFirstAsync<{ user_version: number }>('PRAGMA user_version'))!.user_version,
-      5,
+      6,
     );
   } finally {
     native.close();

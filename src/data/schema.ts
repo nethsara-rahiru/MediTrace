@@ -1,5 +1,5 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
-export const SCHEMA_VERSION = 5;
+export const SCHEMA_VERSION = 6;
 export const schema = `
 CREATE TABLE data_sources (
  id INTEGER PRIMARY KEY, description TEXT NOT NULL UNIQUE
@@ -115,6 +115,19 @@ CREATE TABLE cloud_catalog_links (
  PRIMARY KEY(project_url,remote_id), UNIQUE(product_id)
 );
 PRAGMA user_version = 5;
+      `);
+    });
+  if ((version?.user_version ?? 0) < 6)
+    await db.withTransactionAsync(async () => {
+      await db.execAsync(`
+CREATE TABLE product_publications (
+ project_url TEXT NOT NULL, product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+ remote_id TEXT NOT NULL, write_token TEXT NOT NULL, payload TEXT NOT NULL,
+ pending INTEGER NOT NULL DEFAULT 1 CHECK(pending IN (0,1)), last_error TEXT NOT NULL DEFAULT '',
+ PRIMARY KEY(project_url,product_id), UNIQUE(project_url,remote_id)
+);
+CREATE INDEX publications_pending ON product_publications(project_url,pending);
+PRAGMA user_version = 6;
       `);
     });
 }
