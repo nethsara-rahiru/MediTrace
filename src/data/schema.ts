@@ -1,5 +1,5 @@
 import type { SQLiteDatabase } from 'expo-sqlite';
-export const SCHEMA_VERSION = 4;
+export const SCHEMA_VERSION = 5;
 export const schema = `
 CREATE TABLE data_sources (
  id INTEGER PRIMARY KEY, description TEXT NOT NULL UNIQUE
@@ -104,5 +104,17 @@ PRAGMA user_version = 3;
       await db.execAsync(
         'ALTER TABLE barcodes ADD COLUMN source_scan_id INTEGER REFERENCES scan_history(id) ON DELETE SET NULL; PRAGMA user_version = 4;',
       );
+    });
+  if ((version?.user_version ?? 0) < 5)
+    await db.withTransactionAsync(async () => {
+      await db.execAsync(`
+CREATE TABLE cloud_catalog_links (
+ project_url TEXT NOT NULL, remote_id TEXT NOT NULL,
+ product_id INTEGER NOT NULL REFERENCES products(id) ON DELETE CASCADE,
+ snapshot TEXT NOT NULL, remote_updated_at TEXT NOT NULL,
+ PRIMARY KEY(project_url,remote_id), UNIQUE(product_id)
+);
+PRAGMA user_version = 5;
+      `);
     });
 }
