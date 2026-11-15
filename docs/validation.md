@@ -1,5 +1,21 @@
 # Validation record
 
+## Background online identification and source labels — 15 November 2026
+
+- Automated tests: **109 passed**, including exact online matching, conflict
+  resolution, offline caching, ambiguous/wrong variants, protected edits, late
+  responses, source-check status and exclusion of personal package data.
+- Full browser suite: **15 passed**. New flows prove local results remain visible
+  during a delayed request, online facts are labelled/cached for an offline scan,
+  and unfinished edits survive a background response.
+- Rapid repeated date-correction flow passed three consecutive checks after
+  disabling a field while its previous correction is being saved.
+- TypeScript, formatting and Android JavaScript/Hermes export: passed.
+- Live Supabase name and barcode JSON filters returned HTTP 200 for nonexistent
+  test identifiers. No product records were written by verification.
+- SQLite schema 7 adds persisted per-scan catalog checks. No Supabase migration,
+  application dependency or additional backend is required.
+
 ## Bundled connection and local-save recovery — 15 November 2026
 
 - Automated tests: **98 passed**. Connection fallback, complete/partial overrides,

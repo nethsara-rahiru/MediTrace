@@ -86,7 +86,10 @@ export function applyToken(
       assign(result, 'dosageForm', evidence(form, token.raw, method, token.locator, confidence));
   }
 }
-export function catalogFields(product: Product): Partial<Fields> {
+export function catalogFields(
+  product: Product,
+  retrieval: 'local' | 'online' = 'local',
+): Partial<Fields> {
   const values: Partial<Record<FieldKey, string | Ingredient[]>> = {
     productName: product.name,
     strength: product.strength,
@@ -105,6 +108,7 @@ export function catalogFields(product: Product): Partial<Fields> {
           ...evidence(value, null, 'database', null, 'high'),
           source: product.source || 'Local catalog',
           origin: 'catalog',
+          retrieval,
           verification: product.verification === 'source_checked' ? 'source_checked' : 'unverified',
         },
       });

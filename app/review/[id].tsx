@@ -12,6 +12,9 @@ import {
   Field,
   Section,
 } from '../../src/components/ui';
+import { useOnlineMedicine } from '../../src/hooks/useOnlineMedicine';
+import { OnlineMedicineCheck } from '../../src/components/OnlineMedicineCheck';
+import { chooseOnlineField } from '../../src/data/onlineIdentification';
 import { ReviewField } from '../../src/components/ReviewField';
 import { useIdentification } from '../../src/hooks/useIdentification';
 import { useData } from '../../src/data/context';
@@ -83,6 +86,7 @@ export default function ReviewMedicine() {
     [duplicate, setDuplicate] = useState<number | 'new' | undefined>(),
     [dirty, setDirty] = useState<Set<FieldKey>>(new Set()),
     [showRaw, setShowRaw] = useState(false);
+  const online = useOnlineMedicine(session, setSession, dirty, busy);
   if (loading)
     return (
       <Page>
@@ -146,6 +150,7 @@ export default function ReviewMedicine() {
         )
       : [];
   async function apply(key: FieldKey, text?: string, token?: Token) {
+    online.protect(key);
     setChecked(false);
     setDuplicate(undefined);
     const next = await mutate(async () => {
@@ -231,6 +236,21 @@ export default function ReviewMedicine() {
       setBusy(false);
     }
   }
+  async function useOnlineValue(key: FieldKey) {
+    setBusy(true);
+    setError('');
+    setChecked(false);
+    try {
+      const updated = await mutate(() =>
+        chooseOnlineField(db, session!.id, key, catalogConfig().url),
+      );
+      setSession(updated);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
   function field(key: FieldKey) {
     const value = reviewed.fields[key];
     return (
@@ -283,6 +303,14 @@ export default function ReviewMedicine() {
           />
         )}
       </Card>
+      <OnlineMedicineCheck
+        session={session}
+        checking={online.checking}
+        error={online.error}
+        retry={online.retry}
+        onChoose={(key) => void useOnlineValue(key)}
+        disabled={busy || dirty.size > 0}
+      />
       {saved ? (
         <Notice>
           Saved successfully. User confirmation records what you checked; it does not independently
