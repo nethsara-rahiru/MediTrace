@@ -3,6 +3,7 @@ import { Text } from 'react-native';
 import { Back, Button, Card, Heading, Notice, Page } from '../src/components/ui';
 import { useData } from '../src/data/context';
 import { catalogConfig } from '../src/cloud/config';
+import { queueExistingLocalProducts } from '../src/data/products';
 import { downloadCatalog } from '../src/data/catalog';
 import { colors } from '../src/theme';
 export default function SharedCatalog() {
@@ -11,7 +12,7 @@ export default function SharedCatalog() {
     [message, setMessage] = useState(''),
     [error, setError] = useState(''),
     [last, setLast] = useState('');
-  let config: ReturnType<typeof catalogConfig> = null,
+  let config: ReturnType<typeof catalogConfig> | null = null,
     configurationError = '';
   try {
     config = catalogConfig();
@@ -37,6 +38,23 @@ export default function SharedCatalog() {
       active = false;
     };
   }, [db, projectUrl]);
+  async function queueLocalProducts() {
+    if (!config) return;
+    setBusy(true);
+    setError('');
+    setMessage('');
+    try {
+      const queued = await mutate(() => queueExistingLocalProducts(db, config!.url));
+      const uploaded = await syncUploads();
+      setMessage(
+        `${queued} local products queued · ${uploaded} online saves completed. Any remaining saves stay queued.`,
+      );
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
   async function retryUploads() {
     setBusy(true);
     setError('');
@@ -84,6 +102,9 @@ export default function SharedCatalog() {
           information. Offline product saves are queued for retry.
         </Text>
         <Text style={{ color: colors.muted }}>
+          Connected project: {projectUrl ? new URL(projectUrl).hostname : 'Not configured'}
+        </Text>
+        <Text style={{ color: colors.muted }}>
           Last successful download: {last ? new Date(last).toLocaleString() : 'Not downloaded yet'}
         </Text>
         <Button
@@ -108,6 +129,17 @@ export default function SharedCatalog() {
               {p.name}: {p.last_error || 'Saved locally; waiting to upload.'}
             </Notice>
           ))}
+        <Text style={{ color: colors.muted, lineHeight: 22 }}>
+          Products saved before online setup may not be queued. Queue existing local products to
+          share their reference information; personal package records stay local.
+        </Text>
+        <Button
+          title="Queue existing local products"
+          variant="secondary"
+          busy={busy}
+          disabled={!config}
+          onPress={() => void queueLocalProducts()}
+        />
         <Button
           title="Retry online saves"
           variant="secondary"

@@ -26,24 +26,28 @@ Saving another package of an existing product does not republish its reference.
 5. Never put personal information in the public catalog. The `product` JSON stores
    reference information; the app splits it into normalized SQLite tables.
 
-The publishable key cannot apply migrations. Applying migration 002 in your
-project remains a dashboard step; its SQL was tested in an isolated PostgreSQL
-engine without modifying your live catalog.
+The publishable key cannot apply migrations. Migration 002 was tested in an
+isolated PostgreSQL engine and the live publication endpoint was confirmed
+available on 15 November 2026 with a rejected invalid-input probe. No product was
+created by that check.
 
 ## App configuration
 
-Copy `.env.example` to `.env.local` and set:
+The MedTrace public project URL and publishable key are included in
+`src/cloud/project.ts`, so a fresh checkout and APK work without a local `.env`
+file. These are public client values. RLS and the publication function protect
+access; never include a database password, secret key or service-role key.
 
-```text
-EXPO_PUBLIC_SUPABASE_URL=https://yoflcfahecsjsfhimqbg.supabase.co
-EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY=your-project-publishable-key
-```
+To connect to a different project, copy `.env.example` to `.env.local` and set
+both `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` to that
+project's actual values. Partial overrides are rejected rather than mixing a
+new URL with the bundled key. Remove both overrides to use MedTrace's built-in
+connection. Example placeholder values are not working credentials.
 
-This workspace already has your supplied public connection details in ignored
-`.env.local`. A fresh checkout needs its own configuration. Restart Metro with
-`npx expo start --clear` after changing environment values. Set the same variables
-when building an APK. Never use a database password, secret key or service-role
-key. The app calls Supabase's HTTPS REST API directly.
+After pulling changes, run `npm ci` and restart Metro using
+`npx expo start --clear`. Installed APKs need an updated build. The Shared catalog
+screen displays the connected project's hostname so configuration can be checked.
+The app calls Supabase's HTTPS REST API directly.
 
 Run `npm ci` after updating the project. `expo-crypto` supplies cryptographically
 secure native publication credentials. Web uses browser Web Crypto and requires
@@ -51,6 +55,15 @@ HTTPS or localhost. Native builds must include the SDK-compatible Expo Crypto
 module; rebuild an existing development build after adding the dependency.
 
 ## Product saves and offline retry
+
+If products were saved while online configuration was missing, they may exist
+only in `products` and have no upload-queue entry. After updating, use **Shared
+catalog → Queue existing local products**. This explicitly queues existing local
+reference products and attempts upload. Downloaded records and already queued or
+published products are excluded, preserving UUIDs and device write capabilities.
+Personal inventory and scan records are not included. Pending entries can also
+be retried with **Retry online saves**. Do not clear app storage to fix connection
+settings; that would delete local data and write capabilities.
 
 - App saves commit the local product and its upload queue entry in one SQLite
   transaction, then attempt upload. Failure never discards the local record.
