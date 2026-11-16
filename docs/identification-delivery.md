@@ -36,7 +36,7 @@ scan token, inventory link and barcode-source scan link. New
 and distinct supporting payloads.
 
 See [the schema and extraction guide](intelligent-identification.md) and
-[the migration source](../src/data/schema.ts) for columns, indexes, constraints and
+[the migration source](../src/data/schema.js) for columns, indexes, constraints and
 foreign keys.
 
 ## Extraction algorithm
@@ -92,7 +92,7 @@ No new environment variables or services are required.
 Checks:
 
 ```sh
-npm run typecheck
+npm run check:js
 npm test
 npm run format:check
 npm run export:web
@@ -140,50 +140,50 @@ These screenshots use an isolated **synthetic demonstration**, not real medicine
 
 ### New files
 
-- `app/identify/[id].tsx`
-- `app/review/[id].tsx`
+- `app/identify/[id].js`
+- `app/review/[id].js`
 - `docs/identification-delivery.md`
 - `docs/intelligent-identification.md`
 - `docs/screenshots/field-review.png`
 - `docs/screenshots/identity-confirmation.png`
-- `src/components/ReviewField.tsx`
-- `src/data/identification.ts`
-- `src/data/templates.ts`
-- `src/domain/extraction/dates.ts`
-- `src/domain/extraction/engine.ts`
-- `src/domain/extraction/formats.ts`
-- `src/domain/extraction/optional-ai.ts`
-- `src/domain/extraction/templates.ts`
-- `src/domain/extraction/text.ts`
-- `src/domain/extraction/types.ts`
-- `src/domain/extraction/verification.ts`
-- `src/hooks/useIdentification.ts`
-- `tests/e2e/identification.spec.ts`
-- `tests/extraction.test.ts`
-- `tests/helpers/database.ts`
-- `tests/identification.test.ts`
-- `tests/optional-ai.test.ts`
+- `src/components/ReviewField.js`
+- `src/data/identification.js`
+- `src/data/templates.js`
+- `src/domain/extraction/dates.js`
+- `src/domain/extraction/engine.js`
+- `src/domain/extraction/formats.js`
+- `src/domain/extraction/optional-ai.js`
+- `src/domain/extraction/templates.js`
+- `src/domain/extraction/text.js`
+- `src/domain/extraction/types.js`
+- `src/domain/extraction/verification.js`
+- `src/hooks/useIdentification.js`
+- `tests/e2e/identification.spec.js`
+- `tests/extraction.test.js`
+- `tests/helpers/database.js`
+- `tests/identification.test.js`
+- `tests/optional-ai.test.js`
 
 ### Modified files
 
 - `README.md`
-- `app/add-product.tsx`
-- `app/history.tsx`
-- `app/history/[id].tsx`
-- `app/inventory-entry.tsx`
-- `app/product/[id].tsx`
-- `app/scan-result.tsx`
-- `app/scanner.tsx`
+- `app/add-product.js`
+- `app/history.js`
+- `app/history/[id].js`
+- `app/inventory-entry.js`
+- `app/product/[id].js`
+- `app/scan-result.js`
+- `app/scanner.js`
 - `docs/acceptance.md`
 - `docs/data-safety.md`
 - `docs/scanner-support.md`
 - `docs/validation.md`
-- `src/components/ui.tsx`
-- `src/data/history.ts`
-- `src/data/inventory.ts`
-- `src/data/products.ts`
-- `src/data/schema.ts`
-- `src/domain/gs1.ts`
-- `src/domain/types.ts`
-- `tests/database.test.ts`
-- `tests/e2e/medicine-flow.spec.ts`
+- `src/components/ui.js`
+- `src/data/history.js`
+- `src/data/inventory.js`
+- `src/data/products.js`
+- `src/data/schema.js`
+- `src/domain/gs1.js`
+- `src/domain/extraction/types.js`
+- `tests/database.test.js`
+- `tests/e2e/medicine-flow.spec.js`

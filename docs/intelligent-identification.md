@@ -131,7 +131,7 @@ created.
 
 There is no configured AI service, backend endpoint, API key or AI button in the
 app. The production workflow makes no AI request. A tested, pure optional adapter
-contract is provided in `src/domain/extraction/optional-ai.ts` for a future
+contract is provided in `src/domain/extraction/optional-ai.js` for a future
 server-backed provider. It requires explicit per-call consent, sends only bounded
 raw scan text, supplies an untrusted-input instruction, validates fields against
 literal original evidence and aborts on timeout. Failures return the offline

@@ -34,7 +34,7 @@ created by that check.
 ## App configuration
 
 The MedTrace public project URL and publishable key are included in
-`src/cloud/project.ts`, so a fresh checkout and APK work without a local `.env`
+`src/cloud/project.js`, so a fresh checkout and APK work without a local `.env`
 file. These are public client values. RLS and the publication function protect
 access; never include a database password, secret key or service-role key.
 
@@ -139,7 +139,7 @@ adds provisional barcode-to-name results in `scan_identity_lookups`. Existing
 records remain intact. Supabase migration 002 adds private write-key and
 normalized unique-barcode tables, a barcode trigger and the publication function.
 
-Run `npm run typecheck`, `npm test` and `npm run test:e2e`. Browser tests use synthetic connection values when starting their server and
+Run `npm run check:js`, `npm test` and `npm run test:e2e`. Browser tests use synthetic connection values when starting their server and
 block unmocked Supabase requests. They do not publish fixtures to the live project. A real app
 save after migration 002 should appear immediately as `community` in Supabase
 Table Editor and show an online-save success indicator in product details.

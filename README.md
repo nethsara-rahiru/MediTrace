@@ -4,6 +4,12 @@ An Android-first, offline medicine packaging reference and expiry tracker built
 with React Native, Expo Router and SQLite. The app uses a light navy-and-teal
 interface, with phone navigation and a responsive browser preview.
 
+## JavaScript version
+
+This is the separate `feature/javascript-conversion` branch. Application code,
+tests and configuration are JavaScript; `main` remains unchanged. See the
+[conversion notes](docs/javascript-conversion.md) for switching branches and checks.
+
 ## Run locally
 
 Use Node.js 24 and npm. No backend, API key or database account is required.
@@ -73,7 +79,7 @@ into the app. No medicine facts or barcode mappings are invented.
 ## Checks
 
 ```sh
-npm run typecheck
+npm run check:js
 npm test
 npm run format:check
 npm run export:web

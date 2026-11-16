@@ -1,5 +1,20 @@
 # Validation record
 
+## JavaScript conversion — separate branch
+
+- Branch: `feature/javascript-conversion`; `main` is not merged or modified.
+- All 84 runtime/test/configuration TypeScript files were converted to JavaScript;
+  two declaration-only modules and the TypeScript configuration were removed.
+- JavaScript/JSX syntax and import checks: **86 files passed**.
+- Existing automated tests: **115 passed** both before conversion and after a
+  clean dependency installation, using Node's JavaScript test runner afterward.
+- Full JavaScript browser suite: **17 passed**.
+- Web and Android JavaScript/Hermes exports: passed. The Android source map confirms
+  that the conditional crypto import selects `src/cloud/random.native.js`.
+- No SQL schema version, Supabase migration, medicine data or runtime validation
+  change. Native camera/notification checks still require a physical device.
+- TypeScript-only direct tooling was removed; CI uses `npm run check:js`.
+
 ## Online barcode identity before confirmation — 15 November 2026
 
 - Automated tests: **115 passed**. New coverage includes unknown EAN identification,

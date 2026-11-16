@@ -1,0 +1,30 @@
+export async function recordScan(db, scan, productId) {
+  const status = productId
+    ? 'Catalog match'
+    : scan.kind === 'url'
+      ? 'Website QR'
+      : scan.notes.length
+        ? 'Needs review'
+        : 'Unknown product';
+  const r = await db.runAsync(
+    'INSERT INTO scan_history(raw,format,identifier,product_id,status,batch,expiry,serial,notes) VALUES (?,?,?,?,?,?,?,?,?)',
+    scan.raw,
+    scan.format,
+    scan.identifier,
+    productId,
+    status,
+    scan.batch ?? null,
+    scan.expiry ?? null,
+    scan.serial ?? null,
+    scan.notes.join('\n'),
+  );
+  return r.lastInsertRowId;
+}
+export async function listHistory(db, search = '') {
+  const q = search.trim().toLowerCase();
+  return db.getAllAsync(
+    `SELECT h.*,COALESCE(p.name,json_extract(h.identity_json,'$.name')) AS name FROM scan_history h LEFT JOIN products p ON p.id=h.product_id WHERE ?='' OR instr(lower(COALESCE(p.name,json_extract(h.identity_json,'$.name'),'')||' '||COALESCE(h.identifier,'')||' '||h.status||' '||h.raw),?)>0 ORDER BY h.id DESC LIMIT 200`,
+    q,
+    q,
+  );
+}
